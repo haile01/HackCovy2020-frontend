@@ -88,7 +88,7 @@ const SearchBooking: React.FC = () => {
     let res: any = await api.searchBooking(query);
     if (res.data) {
       res = await Promise.all(res.data.map(async (item: any, index: number) => {
-        const doctorName = await api.getUser(item.doctorId).then((res: any) => res.data.name),
+        const doctorName = item.doctor.fullName,
               startTime = new Date(item.bookingDateTimestamp + 15 * 60000 * item.startBlockTimeIndex),
               endTime = new Date(item.bookingDateTimestamp + 15 * 60000 * (item.endBlockTimeIndex + 1))
         return omit({
