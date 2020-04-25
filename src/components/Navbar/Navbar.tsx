@@ -49,6 +49,7 @@ const Navbar: React.FC = (props: any) => {
   const signOut = () => {
     props.setUser({});
     localStorage.removeItem('token');
+    // eslint-disable-next-line
     location.reload();
   }
   

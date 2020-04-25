@@ -140,6 +140,7 @@ const Booking: React.FC = () => {
     api.book(body).then((res: any) => {
       if (res.success) {
         console.log(res);
+        // eslint-disable-next-line
         location.reload();
       }
       else {
