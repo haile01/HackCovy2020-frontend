@@ -1,50 +1,31 @@
 import React, { useEffect } from 'react'
 import { CommandBar, ICommandBarItemProps } from 'office-ui-fabric-react/lib/CommandBar'
 import { IButtonProps } from 'office-ui-fabric-react/lib/Button'
-import api from '../../utils/api'
+import { connect } from 'react-redux'
+import history from '../../utils/history' 
+
 import { setUser } from '../../actions/userAction'
+import api from '../../utils/api'
 
 const overflowProps: IButtonProps = { ariaLabel: 'More commands' };
 
 const _items: ICommandBarItemProps[] = [
   {
-    key: 'newItem',
-    text: 'New',
+    key: 'home',
+    text: 'Home',
     cacheKey: 'myCacheKey', // changing this key will invalidate this item's cache
-    iconProps: { iconName: 'Add' },
-    subMenuProps: {
-      items: [
-        {
-          key: 'emailMessage',
-          text: 'Email message',
-          iconProps: { iconName: 'Mail' },
-          ['data-automation-id']: 'newEmailButton', // optional
-        },
-        {
-          key: 'calendarEvent',
-          text: 'Calendar event',
-          iconProps: { iconName: 'Calendar' },
-        },
-      ],
-    },
+    iconProps: { iconName: 'Home' },
+    href: '/',
   },
   {
-    key: 'upload',
-    text: 'Upload',
-    iconProps: { iconName: 'Upload' },
-    href: 'https://developer.microsoft.com/en-us/fluentui',
+    key: 'book',
+    text: 'Book',
+    onClick: () => history.push('/book')
   },
   {
-    key: 'share',
-    text: 'Share',
-    iconProps: { iconName: 'Share' },
-    onClick: () => console.log('Share'),
-  },
-  {
-    key: 'download',
-    text: 'Download',
-    iconProps: { iconName: 'Download' },
-    onClick: () => console.log('Download'),
+    key: 'search',
+    text: 'Search',
+    onClick: () => history.push('/search')
   },
 ];
 
@@ -54,32 +35,48 @@ const _overflowItems: ICommandBarItemProps[] = [
   { key: 'rename', text: 'Rename...', onClick: () => console.log('Rename'), iconProps: { iconName: 'Edit' } },
 ];
 
-const _farItems: ICommandBarItemProps[] = [
-  {
-    key: 'tile',
-    text: 'Grid view',
-    // This needs an ariaLabel since it's icon-only
-    ariaLabel: 'Grid view',
-    iconOnly: true,
-    iconProps: { iconName: 'Tiles' },
-    onClick: () => console.log('Tiles'),
-  },
-  {
-    key: 'info',
-    text: 'Info',
-    // This needs an ariaLabel since it's icon-only
-    ariaLabel: 'Info',
-    iconOnly: true,
-    iconProps: { iconName: 'Info' },
-    onClick: () => console.log('Info'),
-  },
-];
+const Navbar: React.FC = (props: any) => {
 
-const Navbar: React.FC = () => {
+  useEffect(() => {
+    if (localStorage.getItem('token'))
+    api.getSession().then((res: any) => {
+      if (res.success) {
+        props.setUser(res.data);
+      }
+    })
+  }, [props.user._id])
 
-  api.getSession().then((_res: any) => {
-    // set user
-  })
+  const signOut = () => {
+    props.setUser({});
+    localStorage.removeItem('token');
+    location.reload();
+  }
+  
+  console.log('nav', props.user)
+
+  const _farItems: ICommandBarItemProps[] = [
+    {
+      key: 'sign-out',
+      text: 'Sign Out',
+      // This needs an ariaLabel since it's icon-only
+      ariaLabel: 'Sign Out',
+      onClick: () => signOut(),
+    },
+  ];
+
+  let profile = []
+  if (props.user.hasOwnProperty('_id')) {
+    profile = [
+      {
+        key: 'profile',
+        text: props.user.fullName,
+        // This needs an ariaLabel since it's icon-only
+        ariaLabel: 'Profile',
+        onClick: () => history.push('/profile')
+      },
+      ..._farItems
+    ]
+  }
   
   return (
     <div className="nav">
@@ -87,11 +84,20 @@ const Navbar: React.FC = () => {
         items={_items}
         overflowItems={_overflowItems}
         overflowButtonProps={overflowProps}
-        farItems={_farItems}
+        farItems={profile}
         ariaLabel="Use left and right arrow keys to navigate between commands"
       />
     </div>
   )
 }
 
-export default Navbar;
+const mapStateToProps = state => ({
+  user: state.user
+})
+
+const mapDispatchtoProps = dispatch => ({
+  setUser: payload => dispatch(setUser(payload))
+})
+
+
+export default connect(mapStateToProps, mapDispatchtoProps)(Navbar);

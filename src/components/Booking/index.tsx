@@ -56,20 +56,37 @@ const Booking: React.FC = () => {
   let [form, setForm] = useState(initialForm);
 
   useEffect(() => {
-    api.getGroups().then((res: any) => setGroups(res.data))
+    api.getGroups().then((res: any) => {
+      res.data = res.data.map(g => ({
+        key: g._id,
+        value: g._id,
+        text: g.name + ' - ' + g.description
+      }));
+      setGroups(res.data)
+    })
   }, [groups.length, ...form])
 
   const _onChange = (value: any, type: number) => {
-    console.log('change', value, type);
     if (value.hasOwnProperty('value')) value = value.value
     form[type] = value;
     setForm(form);
     
     if (type === 7) {
-      api.getDoctors(value).then((res: any) => setDoctors(res.data));
+      api.getDoctors(value).then((res: any) => {
+        res.data = [res.data].map(d => ({
+          key: d._id,
+          value: d._id,
+          text: d.fullName
+        }))
+        console.log(res.data);
+        setDoctors(res.data)
+      });
     }
     if (type === 8) {
       api.getUser(value).then((res: any) => {
+        console.log(res.data);
+        if (!res.data) return;
+        if (res.data.availableTimeBlock.length === 0) res.data.availableTimeBlock = Array(7).fill(0).map(a => new Array());
         let timeBlocks = res.data.availableTimeBlock,
             firstDayOfWeek = new Date(),
             diff = firstDayOfWeek.getDate() - firstDayOfWeek.getDay();
@@ -85,29 +102,30 @@ const Booking: React.FC = () => {
               startTime: (new Date(curDay.getTime() + 15 * 60000 * i)).toTimeString().slice(0, 8),
               endTime: (new Date(curDay.getTime() + 15 * 60000 * (i + 1))).toTimeString().slice(0, 8),
             }
-            console.log(res);
             return res;
           })
           return day;
         })
-        console.log(timeBlocks);
+        console.log('timeblocks', timeBlocks);
         setTimeBlocks(timeBlocks);
       })
     }
     if (type === 11) {
-      console.log(value, timeBlocks[value])
+      if (timeBlocks[value])
       setTimeItems(timeBlocks[value])
     }
     forceReRender();
   }
 
-  const _onSubmit = () => {
+  const _onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (form[12] === "" || form[13] === "") return;
     const body = {
       phoneNumber: form[0],
       passportNumber: form[1],
       name: form[2],
       gender: form[3],
-      dob: form[4].getDate() + '/' + form[2].getMonth() + '/' + form[3].getFullYear,
+      dob: form[4].getDate() + '/' + (form[4].getMonth() + 1) + '/' + form[4].getFullYear(),
       address: form[5],
       healthCareId: form[6],
       doctorId: form[8],
@@ -115,11 +133,14 @@ const Booking: React.FC = () => {
       symptom: form[10].split(','),
       bookingDateTimestamp: form[14],
       startBlockTimeIndex: form[12],
-      endBlockTimeIndex: form[13]
+      endBlockTimeIndex: form[13],
+      attachments: []
     }
+    console.log(body)
     api.book(body).then((res: any) => {
       if (res.success) {
-        // success
+        console.log(res);
+        location.reload();
       }
       else {
         // error
@@ -132,13 +153,17 @@ const Booking: React.FC = () => {
   const checkPrevious = async () => {
     const phone = form[0], Id = form[1];
     let res: any = await api.searchBooking(phone)
-    if (res.success) {
+    if (res.data) {
       res = res.data;
+
       res.filter((book: any) => book.passportNumber == Id);
       if (res.length === 0) {
         // error
         return;
       }
+
+      // if (res.passportNumber !== Id) return;
+      // res = [res];
       
       form[2] = res[0].name;
       form[3] = res[0].gender;
@@ -169,8 +194,9 @@ const Booking: React.FC = () => {
   let _selection : Selection = new Selection({
     onSelectionChanged: () => {
       const selections: any = _selection.getSelection().sort((a: any, b: any) => a.value - b.value);
+      console.log(_selection.getSelection())
       form[12] = selections[0].value; // startBlock
-      form[13] = selections[0].value; // endBlock
+      form[13] = selections[selections.length - 1].value; // endBlock
       let firstDayOfWeek = new Date(),
           diff = firstDayOfWeek.getDate() - firstDayOfWeek.getDay();
       firstDayOfWeek.setDate(diff);
@@ -187,7 +213,7 @@ const Booking: React.FC = () => {
 
   return (
     <div className="booking">
-      <form onSubmit={() => _onSubmit()}>
+      <form onSubmit={_onSubmit}>
         <Separator><h3>Thông tin cá nhân</h3></Separator>
         <TextField   onChange={(e, value) => _onChange(value, 0)} value={form[0]} label="Số điện thoại" required/>
         <TextField   onChange={(e, value) => _onChange(value, 1)} value={form[1]} label="CMND" required/>
@@ -211,11 +237,11 @@ const Booking: React.FC = () => {
         <Separator><h3>Thông tin thanh toán</h3></Separator>
         Cummin' soon
         <Separator><h3>Đăng kí khám bệnh</h3></Separator>
-        <Dropdown  onChange={(e, value) => _onChange(value, 7)} options={groups} label="Chọn khoa"/>
-        <Dropdown  onChange={(e, value) => _onChange(value, 8)} options={doctors} label="Chọn bác sĩ"/>
+        <Dropdown  onChange={(e, value) => _onChange(value, 7)} options={groups} label="Chọn khoa" required/>
+        <Dropdown  onChange={(e, value) => _onChange(value, 8)} options={doctors} label="Chọn bác sĩ" required/>
         <TextField onChange={(e, value) => _onChange(value, 9)} label="Mô tả" required/>
-        <TextField onChange={(e, value) => _onChange(value, 10)} label="Triệu chứng (chỉ cách nhau bởi dấu phẩy)" required/>
-        <Dropdown  onChange={(e, value) => _onChange(value, 11)} options={dayOptions} label="Chọn ngày khám"/>
+        <TextField onChange={(e, value) => _onChange(value, 10)} label="Triệu chứng (chỉ cách nhau bởi dấu phẩy)"/>
+        <Dropdown  onChange={(e, value) => _onChange(value, 11)} options={dayOptions} label="Chọn ngày khám"required/>
         <MarqueeSelection selection={_selection}>
           <DetailsList
             items={timeItems}

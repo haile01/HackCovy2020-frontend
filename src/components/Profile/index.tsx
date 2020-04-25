@@ -3,14 +3,17 @@ import { Pivot, PivotItem } from 'office-ui-fabric-react/lib/Pivot';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Separator } from 'office-ui-fabric-react/lib/Separator';
 import { Image } from 'office-ui-fabric-react/lib/Image';
-import { DetailsList, IColumn } from 'office-ui-fabric-react/lib/DetailsList';
+import { DetailsList, IColumn, IDetailsHeaderProps, DetailsHeader } from 'office-ui-fabric-react/lib/DetailsList';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown';
+import { IRenderFunction } from '@uifabric/utilities/lib/IRenderFunction';
+import { connect } from 'react-redux';
 import api from '../../utils/api';
 
 export interface ProfileProps {
   id: string;
+  user: any;
 };
 export interface User {
   role: string;
@@ -39,24 +42,6 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
     { key: 'fri', name: 'Thứ sáu', startIndex: 0, count: 0, level: 0 },
     { key: 'sat', name: 'Thứ bảy', startIndex: 0, count: 0, level: 0 },
   ]
-
-  const fakeUser: User = {
-    role: "admin",
-    avatar: null,
-    availableTimeBlock: [
-      [1,2,3,4,5,10,12,30,31],
-      [1],
-      [2],
-      [3],
-      [4],
-      [5],
-      [6,7,8]
-    ],
-    _id: "5ea30cc248136638f5d69c61",
-    username: "rknguyen",
-    password: "12345678",
-    fullName: "Nguyen Minh Huy",
-  }
   
   let [rand, setRand] = useState(0);
   let [user, setUser] = useState({
@@ -108,8 +93,7 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
       // Admin only
     }
     else {
-      // Me
-      const user = fakeUser
+      const user = props.user;
       setUser(user);
     }
   }, [user._id])
@@ -132,9 +116,12 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
     forceReRender();
   }
 
+  const addRow = (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+    console.log(event);
+  }
+
   const chooseTime = (index) => {
     return (event, target, value) => {
-      console.log('change', index, value);
       let cur = 0;
       while (index >= user.availableTimeBlock[cur].length) {
         index -= user.availableTimeBlock[cur].length;
@@ -178,9 +165,44 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
     }
   }
 
+  const _onRenderDetailsHeader = (props: IDetailsHeaderProps, _defaultRender?: IRenderFunction<IDetailsHeaderProps>) => {
+    return (
+      <>
+        <DetailsHeader {...props}/>
+        <DefaultButton onClick={addRow} text="Thêm ca làm việc"/>
+      </>
+    )
+  }
+
   const changeTime = () => {
     user.availableTimeBlock.forEach(day => day.sort((a, b) => a - b));
     api.updateUser(user).then((res: any) => {
+      if (res.success) {
+        // success
+      }
+      else {
+        // error
+      }
+    })
+  }
+
+  let [form, setForm] = useState([]);
+
+  const _onChange = (value: any, type: number) => {
+    if (value.hasOwnProperty('value')) value = value.value
+    form[type] = value;
+    setForm(form);
+    forceReRender();
+  }
+
+  let [error, setError] = useState("");
+
+  const checkMatch = () => {
+    setError(form[1] === form[2] ? "" : "Mật khẩu không trùng khớp");
+  }
+
+  const changePassword = () => {
+    api.changePassword(form[1]).then((res: any) => {
       if (res.success) {
         // success
       }
@@ -203,6 +225,7 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
           <form onSubmit={changeTime}>
             <Separator><h3>Thời gian làm việc trong tuần này</h3></Separator>
             <DetailsList
+              onRenderDetailsHeader={_onRenderDetailsHeader}
               onRenderItemColumn={_onRenderItemColumn}
               items={user.availableTimeBlock.flat()}
               groups={groups}
@@ -220,11 +243,21 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
           </form>
         </PivotItem>
         <PivotItem headerText="Đổi mật khẩu">
-          Password
+          <form onSubmit={changePassword}>
+            <Separator><h3>Đổi mật khẩu</h3></Separator>
+            <TextField type="password" onChange={(e, value) => _onChange(value, 0)} value={form[0]} label="Nhập mật khẩu cũ"/>
+            <TextField type="password" onChange={(e, value) => _onChange(value, 1)} onBlur={checkMatch} value={form[1]} label="Nhập mật khẩu mới"/>
+            <TextField type="password" onChange={(e, value) => _onChange(value, 2)} onBlur={checkMatch} errorMessage={error} value={form[2]} label="Nhập lại mật khẩu mới"/>
+            <PrimaryButton type="submit" text="Thay đổi mật khẩu"/>
+          </form>
         </PivotItem>
       </Pivot>
     </div>
   )
 }
 
-export default Profile;
+const mapStateToProps = state => ({
+  user: state.user
+})
+
+export default connect(mapStateToProps, null)(Profile);

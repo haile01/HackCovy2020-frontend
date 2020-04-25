@@ -9,6 +9,7 @@ import {
 } from 'office-ui-fabric-react/lib/DetailsList'
 import omit from 'lodash/omit'
 
+import history from '../../utils/history'
 import api from '../../utils/api'
 
 export interface SingleItem {
@@ -83,15 +84,13 @@ const SearchBooking: React.FC = () => {
   }, [query])
 
   const search = async (query: string) => {
-    console.log('search', query);
     if (query.length === 0) return;
     let res: any = await api.searchBooking(query);
-    if (res.success) {
+    if (res.data) {
       res = await Promise.all(res.data.map(async (item: any, index: number) => {
         const doctorName = await api.getUser(item.doctorId).then((res: any) => res.data.name),
               startTime = new Date(item.bookingDateTimestamp + 15 * 60000 * item.startBlockTimeIndex),
               endTime = new Date(item.bookingDateTimestamp + 15 * 60000 * (item.endBlockTimeIndex + 1))
-        console.log(startTime.toString());
         return omit({
           ...item, 
           key: index, 
@@ -116,7 +115,7 @@ const SearchBooking: React.FC = () => {
   const _getKey = (item: any) => item.key
 
   const _onItemInvoked = (item: any) => {
-    // shows a panel
+    history.push('meet/' + item._id);
   }
 
   return (

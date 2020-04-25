@@ -1,12 +1,12 @@
 import React from 'react'
 
-const CreateProfile = React.lazy(() => import('../Credentials/CreateProfile'))
+const SignIn = React.lazy(() => import('../Credentials/SignIn'))
 
 const Home: React.FC = () => {
   return (
     <div>
       HOME
-      <CreateProfile/>
+      <SignIn/>
     </div>
   )
 }

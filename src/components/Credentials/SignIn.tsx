@@ -1,17 +1,26 @@
 import React, { useState } from 'react'
 import { TextField } from 'office-ui-fabric-react/lib/TextField'
+import { PrimaryButton } from 'office-ui-fabric-react/lib/Button'
+import { setUser } from '../../actions/userAction'
+import { connect } from 'react-redux'
 
 import api from '../../utils/api'
 
-const SignIn: React.FC = () => {
+const SignIn: React.FC = (props: any) => {
 
   let [form, setForm] = useState([{}, {}])
   
-  const signIn = async (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const _onSubmit = async (e: any) => {
     e.preventDefault();
     let res: any = await api.signIn({ username: form[0], password: form[1] })
-    if (res.success) {
-      // success
+    if (res.signed_token) {
+      console.log(res);
+      localStorage.setItem('token', res.signed_token);
+      api.getSession().then((res: any) => {
+        if (res.success) {
+          props.setUser(res.data);
+        }
+      })
     }
     else {
       // error
@@ -27,12 +36,21 @@ const SignIn: React.FC = () => {
 
   return (
     <div className="signin">
-      <form>
+      <form onSubmit={_onSubmit}>
         <TextField onChange={(e) => updateForm(e, 0)} label="Tên tài khoản" required/>
         <TextField onChange={(e) => updateForm(e, 1)} type="password" label="Mật khẩu" required/>
+        <PrimaryButton text="Đăng nhập" type="submit"/>
       </form>
     </div>
   )
 }
 
-export default SignIn
+const mapStateToProps = state => ({
+  user: state.user
+})
+
+const mapDispatchtoProps = dispatch => ({
+  setUser: payload => dispatch(setUser(payload))
+})
+
+export default connect(mapStateToProps, mapDispatchtoProps)(SignIn);
