@@ -141,7 +141,7 @@ const Booking: React.FC = () => {
     api.book(body).then((res: any) => {
       if (res.success) {
         console.log(res);
-        history.push('/search');
+        history.push('/search')
       }
       else {
         // error

@@ -49,6 +49,7 @@ const Navbar: React.FC = (props: any) => {
   const signOut = () => {
     props.setUser({});
     localStorage.removeItem('token');
+    history.push('/')
   }
   
   console.log('nav', props.user)
