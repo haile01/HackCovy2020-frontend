@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button'
-// import { ZoomMtg } from '@zoomus/websdk';
+import { ZoomMtg } from '@zoomus/websdk';
 import api from '../../utils/api';
 require('dotenv').config({ silent: true })
 
@@ -56,37 +56,37 @@ const Meet: React.FC = (props: any) => {
       role: 'assistant'
     };
 
-    // ZoomMtg.generateSignature({
-    //     meetingNumber: meetConfig.meetingNumber,
-    //     apiKey: meetConfig.apiKey,
-    //     apiSecret: meetConfig.apiSecret,
-    //     role: meetConfig.role,
-    //     success(res) {
-    //         console.log('signature', res.result);
-    //         ZoomMtg.init({
-    //             leaveUrl: '/',
-    //             success() {
-    //                 ZoomMtg.join(
-    //                     {
-    //                         meetingNumber: meetConfig.meetingNumber,
-    //                         signature: res.result,
-    //                         apiKey: meetConfig.apiKey,
-    //                         passWord: meetConfig.passWord,
-    //                         success() {
-    //                           // succ
-    //                         },
-    //                         error(res) {
-    //                             console.log(res);
-    //                         }
-    //                     }
-    //                 );
-    //             },
-    //             error(res) {
-    //                 console.log(res);
-    //             }
-    //         });
-    //     }
-    // });
+    ZoomMtg.generateSignature({
+        meetingNumber: meetConfig.meetingNumber,
+        apiKey: meetConfig.apiKey,
+        apiSecret: meetConfig.apiSecret,
+        role: meetConfig.role,
+        success(res) {
+            console.log('signature', res.result);
+            ZoomMtg.init({
+                leaveUrl: '/',
+                success() {
+                    ZoomMtg.join(
+                        {
+                            meetingNumber: meetConfig.meetingNumber,
+                            signature: res.result,
+                            apiKey: meetConfig.apiKey,
+                            passWord: meetConfig.passWord,
+                            success() {
+                              // succ
+                            },
+                            error(res) {
+                                console.log(res);
+                            }
+                        }
+                    );
+                },
+                error(res) {
+                    console.log(res);
+                }
+            });
+        }
+    });
   }
 
   return (
