@@ -8,9 +8,14 @@ const request = {
       "Authorization": localStorage.getItem('token')
     }
   }),
-  post: (url, body) => axios.post(baseURL + url, {
+  post: (url, body) => axios.post(baseURL + url, { ...body }, {
     method: 'POST',
-    ...body,
+    headers: {
+      "Authorization": localStorage.getItem('token')
+    },
+  }),
+  delete: (url) => axios.delete(baseURL + url, {
+    method: 'DELETE',
     headers: {
       "Authorization": localStorage.getItem('token')
     }
@@ -28,6 +33,11 @@ const api = {
   getUser: (query: any) => new Promise(resolve => request.get("user/" + query).then((res: any) => resolve(res.data))),
   getDoctors: (query: any) => new Promise(resolve => request.get("user/group/" + query).then((res: any) => resolve(res.data))),
   getGroups: () => new Promise(resolve => request.get("groups").then((res: any) => resolve(res.data))),
+  createGroup: (body: any) => new Promise(resolve => request.post("group/new", { ...body }).then((res: any) => resolve(res.data))),
+  deleteGroup: (query: any) => new Promise(resolve => request.delete("group/delete/" + query).then((res: any) => resolve(res.data))),
+  createUser: (body: any) => new Promise(resolve => request.post("user/new", { ...body }).then((res: any) => resolve(res.data))),
+  deleteUser: (query: any) => new Promise(resolve => request.delete("user/delete/" + query).then((res: any) => resolve(res.data))),
+  getAllUsers: () => new Promise(resolve => request.get("users").then((res: any) => resolve(res.data))),
   // getGroups: () => new Promise(resolve => resolve({
   //   success: true,
   //   data: [

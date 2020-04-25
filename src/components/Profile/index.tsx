@@ -7,7 +7,6 @@ import { DetailsList, IColumn, IDetailsHeaderProps, DetailsHeader } from 'office
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown';
-import { IRenderFunction } from '@uifabric/utilities/lib/IRenderFunction';
 import { connect } from 'react-redux';
 import api from '../../utils/api';
 
@@ -56,7 +55,7 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
 
   const forceReRender = () => setRand(Math.round(Math.random() * 1000000000));
 
-  const groups = initialGroups;
+  let groups = initialGroups;
   let curInd = 0;
   if (user.availableTimeBlock) 
     user.availableTimeBlock.forEach((day: any, index: number) => {
@@ -64,29 +63,6 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
       groups[index].count = day.length;
       curInd += day.length;
     })
-
-  const formatTimeBlock = (timeBlocks: any): TimeItem[] => {
-    let firstDayOfWeek = new Date(),
-        diff = firstDayOfWeek.getDate() - firstDayOfWeek.getDay();
-    firstDayOfWeek.setDate(diff);
-    firstDayOfWeek.setHours(0, 0, 0, 0);
-
-    timeBlocks = timeBlocks.map((day: any[], index: number) => {
-      const curDay = new Date(firstDayOfWeek.getTime() + 86400000 * index);
-      day = day.map((i: number, index: number) => {
-        const res = {
-          key: index,
-          name: 'Ca thứ ' + (index + 1),
-          startTime: (new Date(curDay.getTime() + 15 * 60000 * i)).toTimeString().slice(0, 8),
-          endTime: (new Date(curDay.getTime() + 15 * 60000 * (i + 1))).toTimeString().slice(0, 8),
-        }
-        return res;
-      })
-      return day;
-    })
-
-    return timeBlocks.flat();
-  }
 
   useEffect(() => {
     if (props.id) {
@@ -152,7 +128,7 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
     curTime += 15 * 60000;
   }
 
-  const _onRenderItemColumn = (item: number, index: number, column: IColumn) => {
+  const _onRenderItemColumnTime = (item: number, index: number, column: IColumn) => {
     switch (column.key) {
       case 'startTime':
         return <Dropdown onChange={chooseTime(index)} selectedKey={item} options={startTimeGroups} placeholder="Nhập thời gian bắt đầu"/>;
@@ -163,15 +139,6 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
       default:
         return <Label>{`Ca thứ ${index}`}</Label>;
     }
-  }
-
-  const _onRenderDetailsHeader = (props: IDetailsHeaderProps, _defaultRender?: IRenderFunction<IDetailsHeaderProps>) => {
-    return (
-      <>
-        <DetailsHeader {...props}/>
-        <DefaultButton onClick={addRow} text="Thêm ca làm việc"/>
-      </>
-    )
   }
 
   const changeTime = () => {
@@ -212,6 +179,145 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
     })
   }
 
+  let [groupItems, setGroupItems] = useState([]);
+  
+  useEffect(() => {
+    api.getGroups().then((res: any) => {
+      if (res.data) {
+        res = res.data.map(g => ({
+          id: g._id,
+          name: g.name,
+          desc: g.description
+        }))
+        console.log(res)
+        setGroupItems(res);
+      }
+    })
+  }, [groupItems.length])
+
+  const groupColumns = [
+    { key: 'name', name: 'Tên khoa', fieldName: 'name', minWidth: 200, maxWidth: 300, isResizable: true },
+    { key: 'desc', name: 'Mô tả', fieldName: 'desc', minWidth: 200, maxWidth: 300, isResizable: true },
+    { key: 'delete', name: '', minWidth: 150, maxWidth: 200, isResizable: true}
+  ]
+
+  const deleteGroup = (index) => {
+    api.deleteGroup(groupItems[index].id).then((res: any) => {
+      if (res.success) {
+        // success
+      }
+      else {
+        // error
+      }
+    })
+  }
+
+  const _onRenderItemColumnGroup = (item: number, index: number, column: IColumn) => {
+    console.log(item, column);
+    switch (column.key) {
+      case 'delete':
+        return <DefaultButton onClick={() => deleteGroup(index)} text="Xoá khoa"/>
+      default:
+        return <Label>{item[column.fieldName]}</Label>;
+    }
+  }
+
+  const createGroup = () => {
+    if (form[3].length === 0 || form[4].length === 0) return;
+    const body = {
+      name: form[3],
+      description: form[4]
+    }
+    api.createGroup(body).then((res: any) => {
+      if (res.success) {
+        // success
+        api.getGroups().then((res: any) => {
+          if (res.data) {
+            res = res.data.map(g => ({
+              name: g.name
+            }))
+            setGroupItems(res);
+          }
+        })
+      }
+      else {
+        // error
+      }
+    })
+  }
+
+  let [doctorItems, setDoctorItems] = useState([]);
+  
+  useEffect(() => {
+    api.getAllUsers().then((res: any) => {
+      if (res.data) {
+        res = res.data.filter(u => u.role !== 'admin').map(d => ({
+          id: d._id,
+          name: d.fullName,
+          group: d.group.name
+        }))
+        setDoctorItems(res);
+      }
+    })
+  }, [doctorItems.length])
+
+  const doctorColumns = [
+    { key: 'name', name: 'Tên bác sĩ', fieldName: 'name', minWidth: 200, maxWidth: 300, isResizable: true },
+    { key: 'group', name: 'Tên khoa', fieldName: 'group', minWidth: 200, maxWidth: 300, isResizable: true },
+    { key: 'delete', name: '', minWidth: 150, maxWidth: 200, isResizable: true}
+  ]
+
+  const deleteDoctor = (index) => {
+    api.deleteUser(groupItems[index].id).then((res: any) => {
+      if (res.success) {
+        // success
+      }
+      else {
+        // error
+      }
+    })
+  }
+
+  const _onRenderItemColumnDoctor = (item: number, index: number, column: IColumn) => {
+    console.log(item, column);
+    switch (column.key) {
+      case 'delete':
+        return <DefaultButton onClick={() => deleteDoctor(index)} text="Xoá khoa"/>
+      default:
+        return <Label>{item[column.fieldName]}</Label>;
+    }
+  }
+
+  const createDoctor = () => {
+    const body = {
+      fullName: form[5],
+      username: form[6],
+      password: form[7],
+      phoneNumber: form[8],
+      email: form[9],
+      passportNumber: form[10],
+      groupId: form[11],
+    }
+    api.createUser(body).then((res: any) => {
+      if (res.success) {
+        // success
+        api.getAllUsers().then((res: any) => {
+          if (res.data) {
+            res = res.data.filter(u => u.role !== 'admin').map(d => ({
+              id: d._id,
+              name: d.fullName,
+              group: d.group.name
+            }))
+            setDoctorItems(res);
+          }
+        })
+      }
+      else {
+        // error
+      }
+    })
+  }
+
   return (
     <div className="profile">
       <Pivot>
@@ -225,14 +331,10 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
           <form onSubmit={changeTime}>
             <Separator><h3>Thời gian làm việc trong tuần này</h3></Separator>
             <DetailsList
-              onRenderDetailsHeader={_onRenderDetailsHeader}
-              onRenderItemColumn={_onRenderItemColumn}
+              onRenderItemColumn={_onRenderItemColumnTime}
               items={user.availableTimeBlock.flat()}
               groups={groups}
               columns={_columns}
-              ariaLabelForSelectAllCheckbox="Toggle selection for all items"
-              ariaLabelForSelectionColumn="Toggle selection"
-              checkButtonAriaLabel="Row checkbox"
               groupProps={{
                 showEmptyGroups: true,
               }}
@@ -250,6 +352,46 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
             <TextField type="password" onChange={(e, value) => _onChange(value, 2)} onBlur={checkMatch} errorMessage={error} value={form[2]} label="Nhập lại mật khẩu mới"/>
             <PrimaryButton type="submit" text="Thay đổi mật khẩu"/>
           </form>
+        </PivotItem>
+        <PivotItem headerText="[Admin] Quản lý khoa">
+          <div>
+              <Separator>Quản lý các khoa của bệnh viện</Separator>
+              <DetailsList
+                items={groupItems}
+                columns={groupColumns}
+                onRenderItemColumn={_onRenderItemColumnGroup}
+                checkboxVisibility={2}
+              />
+              <TextField onChange={(e, value) => _onChange(value, 3)} label="Tạo khoa mới"/>
+              <TextField onChange={(e, value) => _onChange(value, 4)} label="Mô tả khoa"/>
+              <DefaultButton onClick={createGroup} text="Tạo khoa"/>
+          </div>
+        </PivotItem>
+        <PivotItem headerText="[Admin] Quản lý bác sĩ">
+          <div>
+              <Separator>Quản lý các bác sĩ của bệnh viện</Separator>
+              <DetailsList
+                items={doctorItems}
+                columns={doctorColumns}
+                onRenderItemColumn={_onRenderItemColumnDoctor}
+                checkboxVisibility={2}
+              />
+              <TextField onChange={(e, value) => _onChange(value, 5)} label="Tạo bác sĩ mới"/>
+              <TextField onChange={(e, value) => _onChange(value, 6)} label="Tài khoản"/>
+              <TextField onChange={(e, value) => _onChange(value, 7)} label="Mật khẩu"/>
+              <TextField onChange={(e, value) => _onChange(value, 8)} label="Số điện thoại"/>
+              <TextField onChange={(e, value) => _onChange(value, 9)} type="email" label="Email"/>
+              <TextField onChange={(e, value) => _onChange(value, 10)} label="CMND"/>
+              <Dropdown  
+                onChange={(e, value) => _onChange(value, 11)} 
+                options={groupItems.map(g => ({
+                  key: g.id,
+                  value: g.id,
+                  text: g.name + ' - ' + g.desc
+                }))} 
+                label="Chọn khoa" required/>
+              <DefaultButton onClick={createDoctor} text="Tạo bác sĩ"/>
+          </div>
         </PivotItem>
       </Pivot>
     </div>

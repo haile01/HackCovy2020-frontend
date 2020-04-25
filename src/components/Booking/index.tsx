@@ -11,6 +11,7 @@ import { DetailsList, DetailsListLayoutMode, Selection } from 'office-ui-fabric-
 import { MarqueeSelection } from 'office-ui-fabric-react/lib/MarqueeSelection';
 
 import api from '../../utils/api';
+import history from '../../utils/history';
 
 export interface IDetailsListBasic {
   key: number;
@@ -140,7 +141,7 @@ const Booking: React.FC = () => {
     api.book(body).then((res: any) => {
       if (res.success) {
         console.log(res);
-        location.reload();
+        history.push('/search');
       }
       else {
         // error
@@ -156,15 +157,10 @@ const Booking: React.FC = () => {
     if (res.data) {
       res = res.data;
 
-      res.filter((book: any) => book.passportNumber == Id);
-      if (res.length === 0) {
-        // error
-        return;
-      }
-
       // if (res.passportNumber !== Id) return;
       // res = [res];
       
+      form[1] = res[0].passportNumber;
       form[2] = res[0].name;
       form[3] = res[0].gender;
       form[4] = new Date(res[0].dob.slice(6) + '-' + res[0].dob.slice(3, 5) + '-' + res[0].dob.slice(0, 2));
@@ -216,7 +212,6 @@ const Booking: React.FC = () => {
       <form onSubmit={_onSubmit}>
         <Separator><h3>Thông tin cá nhân</h3></Separator>
         <TextField   onChange={(e, value) => _onChange(value, 0)} value={form[0]} label="Số điện thoại" required/>
-        <TextField   onChange={(e, value) => _onChange(value, 1)} value={form[1]} label="CMND" required/>
         <DefaultButton id="checkPrevious" text="Kiểm tra" onClick={toggleCheckBubble}/>
         {
           checkBubble && (
@@ -229,6 +224,7 @@ const Booking: React.FC = () => {
             Nếu bạn đã dùng thông tin này cho những hồ sơ trước, hãy để chúng tôi điền thông tin cho bạn
           </TeachingBubble>
         )}
+        <TextField   onChange={(e, value) => _onChange(value, 1)} value={form[1]} label="CMND" required/>
         <TextField   onChange={(e, value) => _onChange(value, 2)} value={form[2]} label="Tên" required/>
         <ChoiceGroup onChange={(e, value) => _onChange(value, 3)} selectedKey={form[3].toString()} label="Giới tính" defaultSelectedKey="m" options={genderOptions} required/>
         <DatePicker onSelectDate={(value) => _onChange(value, 4)} value={form[4]} label="Ngày sinh" placeholder="Chọn ngày..."/>
