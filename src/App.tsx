@@ -12,6 +12,7 @@ const SearchBooking = React.lazy(() => import("./components/Booking/SearchBookin
 const Booking = React.lazy(() => import("./components/Booking"))
 const Profile = React.lazy(() => import("./components/Profile"))
 const Meet = React.lazy(() => import('./components/Meet'))
+const SignIn = React.lazy(() => import('./components/Credentials/SignIn'))
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <ConnectedRouter history={history}>
             <Switch>
               <Route exact path="/" component={Home}/>
+              <Route exact path="/login" component={SignIn}/>
               <Route exact path="/search" component={SearchBooking}/>
               <Route exact path="/book" component={Booking}/>
               <Route path="/profile/:id" component={Profile}/>
