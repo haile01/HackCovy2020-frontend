@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react'
 import { Pivot, PivotItem } from 'office-ui-fabric-react/lib/Pivot';
 import { Label } from 'office-ui-fabric-react/lib/Label';
@@ -7,6 +6,8 @@ import { Image } from 'office-ui-fabric-react/lib/Image';
 import { DetailsList, IColumn } from 'office-ui-fabric-react/lib/DetailsList';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
+import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown';
+import api from '../../utils/api';
 
 export interface ProfileProps {
   id: string;
@@ -122,27 +123,72 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
 
   const deleteRow = (index) => {
     let cur = 0;
-    while (index >= user.availableTimeBlock[cur].length) index -= user.availableTimeBlock[cur].length, cur++;
+    while (index >= user.availableTimeBlock[cur].length) {
+      index -= user.availableTimeBlock[cur].length;
+      cur++;
+    }
     user.availableTimeBlock[cur].splice(index, 1);
     setUser(user);
     forceReRender();
   }
 
-  const _onRenderItemColumn = (item: TimeItem, index: number, column: IColumn) => {
-    const fieldContent = item[column.fieldName as keyof TimeItem]
+  const chooseTime = (index) => {
+    return (event, target, value) => {
+      console.log('change', index, value);
+      let cur = 0;
+      while (index >= user.availableTimeBlock[cur].length) {
+        index -= user.availableTimeBlock[cur].length;
+        cur++;
+      }
+      user.availableTimeBlock[cur][index] = value;
+      setUser(user);
+      forceReRender();
+    }
+    
+  }
+
+  let startTimeGroups = [], endTimeGroups = [];
+  let curTime = 0;
+  for (var i = 0; i < 96; i++) {
+    let start = (new Date(curTime)).toISOString().slice(11, 19),
+        end = (new Date(curTime + 15 * 60000)).toISOString().slice(11, 19);
+    startTimeGroups.push({
+      key: i,
+      text: start,
+      value: i,
+    })
+    endTimeGroups.push({
+      key: i,
+      text: end,
+      value: i,
+    })
+    curTime += 15 * 60000;
+  }
+
+  const _onRenderItemColumn = (item: number, index: number, column: IColumn) => {
     switch (column.key) {
       case 'startTime':
-        return <TextField value={fieldContent} placeholder="Nhập thời gian bắt đầu"/>;
+        return <Dropdown onChange={chooseTime(index)} selectedKey={item} options={startTimeGroups} placeholder="Nhập thời gian bắt đầu"/>;
       case 'endTime':
-        return <TextField value={fieldContent} placeholder="Nhập thời gian kết thúc"/>;
+        return <Dropdown onChange={chooseTime(index)} selectedKey={item} options={endTimeGroups} placeholder="Nhập thời gian kết thúc"/>;
       case 'delete':
         return <DefaultButton onClick={() => deleteRow(index)} text="Xoá thời gian"/>
       default:
-        return <Label>{fieldContent}</Label>;
+        return <Label>{`Ca thứ ${index}`}</Label>;
     }
   }
 
-  console.log(groups, user);
+  const changeTime = () => {
+    user.availableTimeBlock.forEach(day => day.sort((a, b) => a - b));
+    api.updateUser(user).then((res: any) => {
+      if (res.success) {
+        // success
+      }
+      else {
+        // error
+      }
+    })
+  }
 
   return (
     <div className="profile">
@@ -154,22 +200,24 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
           <Image src={user.avatar || ""}/>
         </PivotItem>
         <PivotItem headerText="Thời gian làm việc">
-          <Separator><h3>Thời gian làm việc trong tuần này</h3></Separator>
-          <DetailsList
-            onRenderItemColumn={_onRenderItemColumn}
-            items={formatTimeBlock(user.availableTimeBlock) as TimeItem[]}
-            groups={groups}
-            columns={_columns}
-            ariaLabelForSelectAllCheckbox="Toggle selection for all items"
-            ariaLabelForSelectionColumn="Toggle selection"
-            checkButtonAriaLabel="Row checkbox"
-            groupProps={{
-              showEmptyGroups: true,
-            }}
-            compact={true}
-            checkboxVisibility={2}
-          />
-          <PrimaryButton text="Thay đổi thời gian làm việc"/>
+          <form onSubmit={changeTime}>
+            <Separator><h3>Thời gian làm việc trong tuần này</h3></Separator>
+            <DetailsList
+              onRenderItemColumn={_onRenderItemColumn}
+              items={user.availableTimeBlock.flat()}
+              groups={groups}
+              columns={_columns}
+              ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+              ariaLabelForSelectionColumn="Toggle selection"
+              checkButtonAriaLabel="Row checkbox"
+              groupProps={{
+                showEmptyGroups: true,
+              }}
+              compact={true}
+              checkboxVisibility={2}
+            />
+            <PrimaryButton type="submit" text="Thay đổi thời gian làm việc"/>
+          </form>
         </PivotItem>
         <PivotItem headerText="Đổi mật khẩu">
           Password

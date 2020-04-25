@@ -4,6 +4,7 @@ const api = {
   getSession: () => new Promise(resolve => axios.get("").then((res: any) => resolve(res))),
   signIn: (body: any) => new Promise(resolve => axios.post("", { body: body }).then((res: any) => resolve(res))),
   book: (body: any) => new Promise(resolve => axios.post("", { body: body }).then((res: any) => resolve(res))),
+  updateUser: (body: any) => new Promise(resolve => axios.post("", { body: body }).then((res: any) => resolve(res))),
   // searchBooking: (query: any) => new Promise(resolve => axios.get("api/booking/" + query).then((res: any) => resolve(res))),
   // getUser: (query: any) => new Promise(resolve => axios.get("api/user/" + query).then((res: any) => resolve(res))),
   // getDoctors: (query: any) => new Promise(resolve => axios.get("api/group/" + query).then((res: any) => resolve(res))),
