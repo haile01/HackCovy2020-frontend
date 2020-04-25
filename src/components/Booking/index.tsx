@@ -242,17 +242,17 @@ const Booking: React.FC = () => {
   return (
     <div className="booking">
       <form onSubmit={_onSubmit}>
-        <Container style={{ width: 1000, overflow: 'hidden', marginTop: 100}}>
+        <Container style={{ width: 1000, overflow: 'hidden', marginTop: 100, marginBottom: 100 }}>
           <div style={{ width: 3000, display: 'flex', flexDirection: 'row', transform: 'translateX(0px)', transition: 'transform .3s ease-in-out' }}>
             <Row>
               <Col style={{ position: 'relative', width: 1000 }}>
                 <NavRight/>
-                <Separator><h3>Thông tin cá nhân</h3></Separator>
+                <h3>Thông tin cá nhân</h3>
                 <Stack horizontal tokens={{ childrenGap: 100 }} styles={stackStyles}>
                   <Stack {...columnProps}>
                   
                     <TextField   onChange={(e, value) => _onChange(value, 0)} value={form[0]} label="Số điện thoại" required/>
-                    <DefaultButton id="checkPrevious" text="Kiểm tra" onClick={toggleCheckBubble}/>
+                    <PrimaryButton id="checkPrevious" text="Kiểm tra" onClick={toggleCheckBubble}/>
                     {
                       checkBubble && (
                       <TeachingBubble
@@ -278,12 +278,12 @@ const Booking: React.FC = () => {
               <Col style={{ position: 'relative', width: 1000 }}>
                 <NavLeft/>
                 <NavRight/>
-                <Separator><h3>Thông tin thanh toán</h3></Separator>
+                <h3>Thông tin thanh toán</h3>
                 Cummin' soon...
               </Col>
               <Col style={{ position: 'relative', width: 1000 }}>
                 <NavLeft/>
-                <Separator><h3>Đăng kí khám bệnh</h3></Separator>
+                <h3>Đăng kí khám bệnh</h3>
                 <Stack horizontal tokens={{ childrenGap: 100 }} styles={stackStyles}>
                   <Stack {...columnProps}>
                     <Dropdown  onChange={(e, value) => _onChange(value, 7)} options={groups} label="Chọn khoa" required/>
