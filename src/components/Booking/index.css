@@ -1,0 +1,12 @@
+.Nav {
+  position: absolute;
+  opacity: 0.2;
+  width: 50px;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.2);
+  transition: opacity .3s;
+}
+
+.Nav:hover {
+  opacity: 0.5;
+}

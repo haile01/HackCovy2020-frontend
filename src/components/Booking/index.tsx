@@ -10,7 +10,8 @@ import { TeachingBubble } from 'office-ui-fabric-react/lib/TeachingBubble'
 import { DetailsList, DetailsListLayoutMode, Selection } from 'office-ui-fabric-react/lib/DetailsList'
 import { MarqueeSelection } from 'office-ui-fabric-react/lib/MarqueeSelection';
 import { Stack, IStackProps, IStackStyles } from 'office-ui-fabric-react/lib/Stack';
-
+import { Container, Row, Col } from 'react-bootstrap';
+import './index.css'
 
 import api from '../../utils/api';
 import history from '../../utils/history';
@@ -137,7 +138,7 @@ const Booking: React.FC = () => {
       bookingDateTimestamp: form[14],
       startBlockTimeIndex: form[12],
       endBlockTimeIndex: form[13],
-      attachments: []
+      attachments: [form[15]],
     }
     console.log(body)
     api.book(body).then((res: any) => {
@@ -186,6 +187,7 @@ const Booking: React.FC = () => {
 
   let _selection : Selection = new Selection({
     onSelectionChanged: () => {
+      if (_selection.getSelection().length === 0) return;
       const selections: any = _selection.getSelection().sort((a: any, b: any) => a.value - b.value);
       console.log(_selection.getSelection())
       form[12] = selections[0].value; // startBlock
@@ -204,6 +206,32 @@ const Booking: React.FC = () => {
     { key: 'column2', name: 'Đến', fieldName: 'endTime', minWidth: 100, maxWidth: 200, isResizable: true },
   ];
 
+  const upLoadImage = (e: React.FormEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    var files = (e.target as HTMLInputElement).files[0];
+    var fileName = (new Date()).getTime() + files.name;
+    const body = {
+      fileName,
+      fileType: files.type
+    }
+    api.generateSignedUrl(body).then((res: any) => {
+      console.log(res);
+      if (res.url) {
+        form[15] = res.url;
+        setForm(form);
+        api.uploadImage({
+          url: res.signedUrl,
+          data: files,
+          type: 'PUT',
+          dataType: 'html',
+          processData: false,
+          headers: {'Content-Type': files.type},
+          crossDomain: true,
+        })
+      }
+    })
+  }
+
   const columnProps: Partial<IStackProps> = {
     tokens: { childrenGap: 15 },
     styles: { root: { width: 350, float: 'left' } },
@@ -214,63 +242,113 @@ const Booking: React.FC = () => {
   return (
     <div className="booking">
       <form onSubmit={_onSubmit}>
-        <Separator><h3>Thông tin cá nhân</h3></Separator>
-        <Stack horizontal tokens={{ childrenGap: 100 }} styles={stackStyles}>
-          <Stack {...columnProps}>
-          
-            <TextField   onChange={(e, value) => _onChange(value, 0)} value={form[0]} label="Số điện thoại" required/>
-            <DefaultButton id="checkPrevious" text="Kiểm tra" onClick={toggleCheckBubble}/>
-            {
-              checkBubble && (
-              <TeachingBubble
-                            target="#checkPrevious" 
-                            primaryButtonProps={_primaryButtonProps}
-                            headline="Tự động điền thông tin"
-                            onDismiss={toggleCheckBubble}
-                            >
-                Nếu bạn đã dùng thông tin này cho những hồ sơ trước, hãy để chúng tôi điền thông tin cho bạn
-              </TeachingBubble>
-            )}
-            <TextField   onChange={(e, value) => _onChange(value, 1)} value={form[1]} label="CMND" required/>
-            <TextField   onChange={(e, value) => _onChange(value, 2)} value={form[2]} label="Tên" required/>
-          </Stack>
-          <Stack {...columnProps}>
-            <DatePicker onSelectDate={(value) => _onChange(value, 4)} value={form[4]} label="Ngày sinh" placeholder="Chọn ngày..."/>
-            <TextField   onChange={(e, value) => _onChange(value, 5)} value={form[5]} label="Địa chỉ" required/>
-            <TextField   onChange={(e, value) => _onChange(value, 6)} value={form[6]} label="BHYT" required/>
-            <ChoiceGroup onChange={(e, value) => _onChange(value, 3)} selectedKey={form[3].toString()} label="Giới tính" defaultSelectedKey="m" options={genderOptions} required/>
-          </Stack>
-        </Stack>
-        <Separator><h3>Thông tin thanh toán</h3></Separator>
-        Cummin' soon
-        <Separator><h3>Đăng kí khám bệnh</h3></Separator>
-        <Stack horizontal tokens={{ childrenGap: 100 }} styles={stackStyles}>
-          <Stack {...columnProps}>
-            <Dropdown  onChange={(e, value) => _onChange(value, 7)} options={groups} label="Chọn khoa" required/>
-            <Dropdown  onChange={(e, value) => _onChange(value, 8)} options={doctors} label="Chọn bác sĩ" required/>
-            <TextField onChange={(e, value) => _onChange(value, 9)} label="Mô tả" required/>
-            <TextField onChange={(e, value) => _onChange(value, 10)} label="Triệu chứng (chỉ cách nhau bởi dấu phẩy)"/>
-            <Dropdown  onChange={(e, value) => _onChange(value, 11)} options={dayOptions} label="Chọn ngày khám"required/>
-          </Stack>
-          <Stack {...columnProps}>
-          <MarqueeSelection selection={_selection}>
-            <DetailsList
-              items={timeItems}
-              columns={timeColumns}
-              setKey="set"
-              layoutMode={DetailsListLayoutMode.justified}
-              selection={_selection}
-              selectionPreservedOnEmptyClick={true}
-              ariaLabelForSelectionColumn="Toggle selection"
-              ariaLabelForSelectAllCheckbox="Toggle selection for all items"
-              checkButtonAriaLabel="Row checkbox"
-            />
-          </MarqueeSelection>
-          </Stack>
-        </Stack>
-        <PrimaryButton type="submit" text="Đăng kí khám bệnh"/>
+        <Container style={{ width: 1000, overflow: 'hidden', marginTop: 100}}>
+          <div style={{ width: 3000, display: 'flex', flexDirection: 'row', transform: 'translateX(0px)', transition: 'transform .3s ease-in-out' }}>
+            <Row>
+              <Col style={{ position: 'relative', width: 1000 }}>
+                <NavRight/>
+                <Separator><h3>Thông tin cá nhân</h3></Separator>
+                <Stack horizontal tokens={{ childrenGap: 100 }} styles={stackStyles}>
+                  <Stack {...columnProps}>
+                  
+                    <TextField   onChange={(e, value) => _onChange(value, 0)} value={form[0]} label="Số điện thoại" required/>
+                    <DefaultButton id="checkPrevious" text="Kiểm tra" onClick={toggleCheckBubble}/>
+                    {
+                      checkBubble && (
+                      <TeachingBubble
+                                    target="#checkPrevious" 
+                                    primaryButtonProps={_primaryButtonProps}
+                                    headline="Tự động điền thông tin"
+                                    onDismiss={toggleCheckBubble}
+                                    >
+                        Nếu bạn đã dùng thông tin này cho những hồ sơ trước, hãy để chúng tôi điền thông tin cho bạn
+                      </TeachingBubble>
+                    )}
+                    <TextField   onChange={(e, value) => _onChange(value, 1)} value={form[1]} label="CMND" required/>
+                    <TextField   onChange={(e, value) => _onChange(value, 2)} value={form[2]} label="Tên" required/>
+                  </Stack>
+                  <Stack {...columnProps}>
+                    <DatePicker onSelectDate={(value) => _onChange(value, 4)} value={form[4]} label="Ngày sinh" placeholder="Chọn ngày..."/>
+                    <TextField   onChange={(e, value) => _onChange(value, 5)} value={form[5]} label="Địa chỉ" required/>
+                    <TextField   onChange={(e, value) => _onChange(value, 6)} value={form[6]} label="BHYT" required/>
+                    <ChoiceGroup onChange={(e, value) => _onChange(value, 3)} selectedKey={form[3].toString()} label="Giới tính" defaultSelectedKey="m" options={genderOptions} required/>
+                  </Stack>
+                </Stack>
+              </Col>
+              <Col style={{ position: 'relative', width: 1000 }}>
+                <NavLeft/>
+                <NavRight/>
+                <Separator><h3>Thông tin thanh toán</h3></Separator>
+                Cummin' soon...
+              </Col>
+              <Col style={{ position: 'relative', width: 1000 }}>
+                <NavLeft/>
+                <Separator><h3>Đăng kí khám bệnh</h3></Separator>
+                <Stack horizontal tokens={{ childrenGap: 100 }} styles={stackStyles}>
+                  <Stack {...columnProps}>
+                    <Dropdown  onChange={(e, value) => _onChange(value, 7)} options={groups} label="Chọn khoa" required/>
+                    <Dropdown  onChange={(e, value) => _onChange(value, 8)} options={doctors} label="Chọn bác sĩ" required/>
+                    <TextField onChange={(e, value) => _onChange(value, 9)} label="Mô tả" required/>
+                    <TextField onChange={(e, value) => _onChange(value, 10)} label="Triệu chứng (chỉ cách nhau bởi dấu phẩy)"/>
+                    <Dropdown  onChange={(e, value) => _onChange(value, 11)} options={dayOptions} label="Chọn ngày khám"required/>
+                    <input type="file" onChange={upLoadImage}/>
+                  </Stack>
+                  <Stack {...columnProps}>
+                  <MarqueeSelection selection={_selection}>
+                    <DetailsList
+                      items={timeItems}
+                      columns={timeColumns}
+                      setKey="set"
+                      layoutMode={DetailsListLayoutMode.justified}
+                      selection={_selection}
+                      selectionPreservedOnEmptyClick={true}
+                      ariaLabelForSelectionColumn="Toggle selection"
+                      ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+                      checkButtonAriaLabel="Row checkbox"
+                    />
+                  </MarqueeSelection>
+                  </Stack>
+                </Stack>
+                <PrimaryButton type="submit" text="Đăng kí khám bệnh"/>
+              </Col>
+            </Row>
+          </div>
+        </Container>
       </form>
     </div>
+  )
+}
+
+const NavLeft: React.FC = () => {
+  
+  const navLeft = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const target = (e.target as HTMLElement).parentElement.parentElement.parentElement;
+    let curVal: any = target.style.transform.slice(11, -3);
+    curVal = parseInt(curVal);
+    console.log(curVal);
+    curVal += 1000;
+    target.style.transform = 'translateX(' + curVal + 'px)';
+  }
+
+  return (
+    <div className="Nav" onClick={navLeft} style={{ left: 0 }}></div>
+  )
+}
+
+const NavRight: React.FC = () => {
+  
+  const navRight = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const target = (e.target as HTMLElement).parentElement.parentElement.parentElement;
+    console.log(target, target.style.transform);
+    let curVal: any = target.style.transform.slice(11, -3);
+    curVal = parseInt(curVal);
+    console.log(curVal);
+    curVal -= 1000;
+    target.style.transform = 'translateX(' + curVal + 'px)';
+  }
+
+  return (
+    <div className="Nav" onClick={navRight} style={{ right: 0 }}></div>
   )
 }
 
