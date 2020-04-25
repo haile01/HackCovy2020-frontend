@@ -23,7 +23,7 @@ function App() {
           <ConnectedRouter history={history}>
             <Switch>
               <Route exact path="/" component={Home}/>
-              <Route exact path="/login" component={SignIn}/>
+              <Route exact path="/signin" component={SignIn}/>
               <Route exact path="/search" component={SearchBooking}/>
               <Route exact path="/book" component={Booking}/>
               <Route path="/profile/:id" component={Profile}/>

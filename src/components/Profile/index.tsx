@@ -361,6 +361,7 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
                 }}
                 compact={true}
                 checkboxVisibility={2}
+                styles={{ root: { marginBottom: 20 } }}
               />}
             </Stack>
             <PrimaryButton type="submit" text="Thay đổi thời gian làm việc"/>
@@ -372,7 +373,7 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
             <Stack styles={stackStyles}>
               <TextField type="password" onChange={(e, value) => _onChange(value, 0)} value={form[0]} label="Nhập mật khẩu cũ"/>
               <TextField type="password" onChange={(e, value) => _onChange(value, 1)} onBlur={checkMatch} value={form[1]} label="Nhập mật khẩu mới"/>
-              <TextField type="password" onChange={(e, value) => _onChange(value, 2)} onBlur={checkMatch} errorMessage={error} value={form[2]} label="Nhập lại mật khẩu mới"/>
+              <TextField type="password" onChange={(e, value) => _onChange(value, 2)} onBlur={checkMatch} errorMessage={error} value={form[2]} styles={{ root: { marginBottom: 20 } }} label="Nhập lại mật khẩu mới"/>
               <PrimaryButton type="submit" text="Thay đổi mật khẩu"/>
             </Stack>
           </form>

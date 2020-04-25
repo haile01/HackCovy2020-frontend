@@ -3,8 +3,10 @@ import { TextField } from 'office-ui-fabric-react/lib/TextField'
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button'
 import { setUser } from '../../actions/userAction'
 import { connect } from 'react-redux'
+import { Stack, IStackStyles } from 'office-ui-fabric-react/lib/Stack';
 
 import api from '../../utils/api'
+import history from '../../utils/history'
 
 const SignIn: React.FC = (props: any) => {
 
@@ -19,6 +21,7 @@ const SignIn: React.FC = (props: any) => {
       api.getSession().then((res: any) => {
         if (res.success) {
           props.setUser(res.data);
+          history.push('/');
         }
       })
     }
@@ -34,12 +37,16 @@ const SignIn: React.FC = (props: any) => {
     setForm(form);
   }
 
+  const stackStyles: Partial<IStackStyles> = { root: { width: 900, margin: 'auto' } };
+
   return (
     <div className="signin">
       <form onSubmit={_onSubmit}>
-        <TextField onChange={(e) => updateForm(e, 0)} label="Tên tài khoản" required/>
-        <TextField onChange={(e) => updateForm(e, 1)} type="password" label="Mật khẩu" required/>
-        <PrimaryButton text="Đăng nhập" type="submit"/>
+        <Stack styles={stackStyles}>
+          <TextField onChange={(e) => updateForm(e, 0)} label="Tên tài khoản" required/>
+          <TextField onChange={(e) => updateForm(e, 1)} type="password" label="Mật khẩu" styles={{ root: { marginBottom: 20 } }} required/>
+          <PrimaryButton text="Đăng nhập" type="submit"/>
+        </Stack>
       </form>
     </div>
   )
