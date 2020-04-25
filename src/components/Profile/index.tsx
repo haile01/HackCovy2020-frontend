@@ -1,9 +1,12 @@
+
 import React, { useEffect, useState } from 'react'
 import { Pivot, PivotItem } from 'office-ui-fabric-react/lib/Pivot';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Separator } from 'office-ui-fabric-react/lib/Separator';
 import { Image } from 'office-ui-fabric-react/lib/Image';
-import { DetailsList } from 'office-ui-fabric-react/lib/DetailsList';
+import { DetailsList, IColumn } from 'office-ui-fabric-react/lib/DetailsList';
+import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import { TextField } from 'office-ui-fabric-react/lib/TextField';
 
 export interface ProfileProps {
   id: string;
@@ -17,9 +20,14 @@ export interface User {
   password: string,
   fullName: string,
 }
+export interface TimeItem {
+  key: string,
+  name: string,
+  startTime: string,
+  endTime: string,
+} 
 
 const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
-  console.log(props.id);
   
   const initialGroups = [
     { key: 'sun', name: 'Chủ nhật', startIndex: 0, count: 0, level: 0 },
@@ -34,17 +42,44 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
   const fakeUser: User = {
     role: "admin",
     avatar: null,
-    availableTimeBlock: [],
+    availableTimeBlock: [
+      [1,2,3,4,5,10,12,30,31],
+      [1],
+      [2],
+      [3],
+      [4],
+      [5],
+      [6,7,8]
+    ],
     _id: "5ea30cc248136638f5d69c61",
     username: "rknguyen",
     password: "12345678",
     fullName: "Nguyen Minh Huy",
   }
   
-  let [user, setUser] = useState({} as User);
-  let [groups, setGroups] = useState(initialGroups);
+  let [rand, setRand] = useState(0);
+  let [user, setUser] = useState({
+    role: '',
+    avatar: null,
+    availableTimeBlock: [],
+    _id: "",
+    username: "",
+    password: "",
+    fullName: ""
+  } as User);
 
-  const formatTimeBlock = (timeBlocks: any) => {
+  const forceReRender = () => setRand(Math.round(Math.random() * 1000000000));
+
+  const groups = initialGroups;
+  let curInd = 0;
+  if (user.availableTimeBlock) 
+    user.availableTimeBlock.forEach((day: any, index: number) => {
+      groups[index].startIndex = curInd;
+      groups[index].count = day.length;
+      curInd += day.length;
+    })
+
+  const formatTimeBlock = (timeBlocks: any): TimeItem[] => {
     let firstDayOfWeek = new Date(),
         diff = firstDayOfWeek.getDate() - firstDayOfWeek.getDay();
     firstDayOfWeek.setDate(diff);
@@ -64,35 +99,50 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
       return day;
     })
 
-    let curInd = 0;
-    timeBlocks.forEach((day: any, index: number) => {
-      groups[index].startIndex = curInd;
-      groups[index].count = day.length;
-      curInd += day.length;
-    })
-
-    setGroups(groups);
-    console.log('func', timeBlocks.flat());
     return timeBlocks.flat();
   }
 
   useEffect(() => {
-    if (props.id === "") {
-      // Me
-      setUser({...fakeUser, availableTimeBlock: formatTimeBlock(fakeUser.availableTimeBlock)});
-    }
-    else {
+    if (props.id) {
       // Admin only
     }
-  })
+    else {
+      // Me
+      const user = fakeUser
+      setUser(user);
+    }
+  }, [user._id])
 
-  const _columns = [
+  const _columns = [ 
     { key: 'time', name: 'Thời gian', fieldName: 'time', minWidth: 100, maxWidth: 200, isResizable: true },
     { key: 'startTime', name: 'Bắt đầu', fieldName: 'startTime', minWidth: 200, maxWidth: 300 },
     { key: 'endTime', name: 'Kết thúc', fieldName: 'endTime', minWidth: 200, maxWidth: 300 },
+    { key: 'delete', name: '', fieldName: 'delete', minWidth: 200, maxWidth: 300 },
   ]
 
-  console.log(user.availableTimeBlock);
+  const deleteRow = (index) => {
+    let cur = 0;
+    while (index >= user.availableTimeBlock[cur].length) index -= user.availableTimeBlock[cur].length, cur++;
+    user.availableTimeBlock[cur].splice(index, 1);
+    setUser(user);
+    forceReRender();
+  }
+
+  const _onRenderItemColumn = (item: TimeItem, index: number, column: IColumn) => {
+    const fieldContent = item[column.fieldName as keyof TimeItem]
+    switch (column.key) {
+      case 'startTime':
+        return <TextField value={fieldContent} placeholder="Nhập thời gian bắt đầu"/>;
+      case 'endTime':
+        return <TextField value={fieldContent} placeholder="Nhập thời gian kết thúc"/>;
+      case 'delete':
+        return <DefaultButton onClick={() => deleteRow(index)} text="Xoá thời gian"/>
+      default:
+        return <Label>{fieldContent}</Label>;
+    }
+  }
+
+  console.log(groups, user);
 
   return (
     <div className="profile">
@@ -106,7 +156,8 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
         <PivotItem headerText="Thời gian làm việc">
           <Separator><h3>Thời gian làm việc trong tuần này</h3></Separator>
           <DetailsList
-            items={user.availableTimeBlock}
+            onRenderItemColumn={_onRenderItemColumn}
+            items={formatTimeBlock(user.availableTimeBlock) as TimeItem[]}
             groups={groups}
             columns={_columns}
             ariaLabelForSelectAllCheckbox="Toggle selection for all items"
@@ -116,7 +167,9 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
               showEmptyGroups: true,
             }}
             compact={true}
+            checkboxVisibility={2}
           />
+          <PrimaryButton text="Thay đổi thời gian làm việc"/>
         </PivotItem>
         <PivotItem headerText="Đổi mật khẩu">
           Password

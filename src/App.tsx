@@ -23,7 +23,8 @@ function App() {
               <Route exact path="/" component={Home}/>
               <Route exact path="/bookings" component={SearchBooking}/>
               <Route exact path="/book" component={Booking}/>
-              <Route exact path="/profile/:id" component={Profile}/>
+              <Route path="/profile/:id" component={Profile}/>
+              <Route path="/profile" id="" component={Profile}/>
             </Switch>
           </ConnectedRouter>
         </Suspense>
