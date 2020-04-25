@@ -8,11 +8,14 @@ import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button'
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown';
 import { connect } from 'react-redux';
+
+import { setUser } from '../../actions/userAction'
 import api from '../../utils/api';
 
 export interface ProfileProps {
   id: string;
   user: any;
+  setUser: any;
 };
 export interface User {
   role: string;
@@ -70,7 +73,15 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
     }
     else {
       const user = props.user;
-      setUser(user);
+      if (!user.hasOwnProperty('_id')) api.getSession().then((res: any) => {
+        if (res.success) {
+          props.setUser(res.data);
+          setUser(res.data);
+          forceReRender();
+        }
+      })
+      else 
+        setUser(user);
     }
   }, [user._id])
 
@@ -141,11 +152,12 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
     }
   }
 
-  const changeTime = () => {
+  const changeTime = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     user.availableTimeBlock.forEach(day => day.sort((a, b) => a - b));
-    api.updateUser(user).then((res: any) => {
+    api.updateTimeBlock({ availableTimeBlock: user.availableTimeBlock }).then((res: any) => {
       if (res.success) {
-        // success
+        forceReRender();
       }
       else {
         // error
@@ -169,7 +181,7 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
   }
 
   const changePassword = () => {
-    api.changePassword(form[1]).then((res: any) => {
+    api.changePassword({ password: form[1] }).then((res: any) => {
       if (res.success) {
         // success
       }
@@ -330,7 +342,7 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
         <PivotItem headerText="Thời gian làm việc">
           <form onSubmit={changeTime}>
             <Separator><h3>Thời gian làm việc trong tuần này</h3></Separator>
-            <DetailsList
+            {user.availableTimeBlock && <DetailsList
               onRenderItemColumn={_onRenderItemColumnTime}
               items={user.availableTimeBlock.flat()}
               groups={groups}
@@ -340,7 +352,7 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
               }}
               compact={true}
               checkboxVisibility={2}
-            />
+            />}
             <PrimaryButton type="submit" text="Thay đổi thời gian làm việc"/>
           </form>
         </PivotItem>
@@ -402,4 +414,8 @@ const mapStateToProps = state => ({
   user: state.user
 })
 
-export default connect(mapStateToProps, null)(Profile);
+const mapDispatchtoProps = dispatch => ({
+  setUser: payload => dispatch(setUser(payload))
+})
+
+export default connect(mapStateToProps, mapDispatchtoProps)(Profile);

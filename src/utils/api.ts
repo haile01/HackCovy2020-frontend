@@ -19,7 +19,13 @@ const request = {
     headers: {
       "Authorization": localStorage.getItem('token')
     }
-  })
+  }),
+  patch: (url, body) => axios.patch(baseURL + url, { ...body }, {
+    method: 'PATCH',
+    headers: {
+      "Authorization": localStorage.getItem('token')
+    },
+  }),
 }
 
 const api = {
@@ -28,7 +34,7 @@ const api = {
   signIn: (body: any) => new Promise(resolve => request.post("auth/sign-in", { ...body }).then((res: any) => resolve(res.data))),
   book: (body: any) => new Promise(resolve => request.post("booking/new", { ...body }).then((res: any) => resolve(res.data))),
   updateUser: (body: any) => new Promise(resolve => request.post("", { ...body }).then((res: any) => resolve(res.data))),
-  changePassword: (body: any) => new Promise(resolve => request.post("", { ...body }).then((res: any) => resolve(res.data))),
+  changePassword: (body: any) => new Promise(resolve => request.patch("user/me/password", { ...body }).then((res: any) => resolve(res.data))),
   searchBooking: (query: any) => new Promise(resolve => request.get("booking/phone/" + query).then((res: any) => resolve(res.data))),
   getUser: (query: any) => new Promise(resolve => request.get("user/" + query).then((res: any) => resolve(res.data))),
   getDoctors: (query: any) => new Promise(resolve => request.get("user/group/" + query).then((res: any) => resolve(res.data))),
@@ -38,6 +44,7 @@ const api = {
   createUser: (body: any) => new Promise(resolve => request.post("user/new", { ...body }).then((res: any) => resolve(res.data))),
   deleteUser: (query: any) => new Promise(resolve => request.delete("user/delete/" + query).then((res: any) => resolve(res.data))),
   getAllUsers: () => new Promise(resolve => request.get("users").then((res: any) => resolve(res.data))),
+  updateTimeBlock: (body: any) => new Promise(resolve => request.patch("user/me/available-time", { ...body }).then((res: any) => resolve(res.data))),
   // getGroups: () => new Promise(resolve => resolve({
   //   success: true,
   //   data: [
