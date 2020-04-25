@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { TextField } from "office-ui-fabric-react/lib/TextField";
+import { ZoomMtg } from "@zoomus/websdk";
 import {
   DetailsList,
   DetailsListLayoutMode,
@@ -8,9 +9,45 @@ import {
 import omit from "lodash/omit";
 import { Stack, IStackStyles } from "office-ui-fabric-react/lib/Stack";
 import { Spinner } from "office-ui-fabric-react/lib/Spinner";
-import { MessageBar, MessageBarType } from "office-ui-fabric-react";
+import {
+  MessageBar,
+  MessageBarType,
+  IColumn,
+  PrimaryButton,
+} from "office-ui-fabric-react";
 import history from "../../utils/history";
 import api from "../../utils/api";
+
+ZoomMtg.setZoomJSLib("https://source.zoom.us/1.7.6/lib", "/av");
+ZoomMtg.preLoadWasm();
+ZoomMtg.prepareJssdk();
+
+const API_KEY = "dXUjsOe2THCVHLUFcuA_JA";
+const API_SECRET = "KDn6c6NYqTvqQSsc2lsNtulUZ969pB9wBSqW";
+const password = "8tfXvC";
+
+export interface Meeting {
+  status: string;
+  symptom: string[];
+  rating: any;
+  attachments: string[];
+  _id: string;
+  name: string;
+  description: string;
+  gender: string;
+  dob: string;
+  address: string;
+  phoneNumber: string;
+  passportNumber: string;
+  healthCareId: string;
+  doctorId: string;
+  bookingDateTimestamp: number;
+  startBlockTimeIndex: number;
+  endBlockTimeIndex: number;
+  zoomMeetingId: number;
+  modifiedAt: number;
+  createdAt: number;
+}
 
 export interface SingleItem {
   key: string;
@@ -67,6 +104,14 @@ const SearchBooking: React.FC = () => {
       minWidth: 250,
       maxWidth: 350,
     },
+    {
+      key: "column6",
+      name: "Action",
+      className: "meetingId",
+      fieldName: "meetingId",
+      minWidth: 250,
+      maxWidth: 350,
+    },
   ];
 
   let [timeOut, newTimeOut] = useState(null as NodeJS.Timeout | null);
@@ -101,6 +146,7 @@ const SearchBooking: React.FC = () => {
                 startTime.toDateString() + " - " + startTime.toTimeString(),
               endTime: endTime.toDateString() + " - " + endTime.toTimeString(),
               doctorName: doctorName,
+              meetingId: item.status !== "RUNNING" ? null : item.zoomMeetingId,
             },
             ["bookingDateTimestamp", "startBlockTimeIndex", "endBlockTimeIndex"]
           );
@@ -121,11 +167,76 @@ const SearchBooking: React.FC = () => {
     setQuery(value);
   };
 
+  const joinMeeting = (meetingNumber: any) => {
+    const zoomRoot = document.getElementById("zmmtg-root");
+    zoomRoot.style.display = "block";
+    const meetConfig = {
+      apiKey: API_KEY,
+      apiSecret: API_SECRET,
+      meetingNumber: meetingNumber,
+      passWord: password,
+      leaveUrl: document.location.href,
+      role: 0,
+      userName: "Patient",
+    };
+    try {
+      var signature = ZoomMtg.generateSignature({
+        meetingNumber: meetConfig.meetingNumber,
+        apiKey: meetConfig.apiKey,
+        apiSecret: meetConfig.apiSecret,
+        role: meetConfig.role,
+        success() {},
+      });
+
+      ZoomMtg.init({
+        leaveUrl: "http://www.zoom.us",
+        isSupportAV: true,
+        success: function () {
+          ZoomMtg.join({
+            meetingNumber: meetConfig.meetingNumber,
+            userName: meetConfig.userName,
+            signature: signature,
+            apiKey: meetConfig.apiKey,
+            passWord: meetConfig.passWord,
+            success: function (res) {
+              console.log("join meeting success");
+            },
+            error: function (res) {
+              console.log(res);
+            },
+          });
+        },
+        error: function (res) {
+          console.log(res);
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  function _renderItemColumn(item: any, index: number, column: IColumn) {
+    const fieldContent = item[column.fieldName] as string;
+    console.log(column.key);
+    switch (column.key) {
+      case "column6":
+        return fieldContent === null ? (
+          <span>Finished</span>
+        ) : (
+          <PrimaryButton
+            text="Join meeting"
+            onClick={() => joinMeeting(fieldContent)}
+            allowDisabledFocus
+          />
+        );
+      default:
+        return <span>{fieldContent}</span>;
+    }
+  }
+
   const _getKey = (item: any) => item.key;
 
-  const _onItemInvoked = (item: any) => {
-    history.push("meet/" + item._id);
-  };
+  const _onItemInvoked = (item: any) => {};
 
   const stackStyles: Partial<IStackStyles> = {
     root: { width: 500, margin: "auto" },
@@ -184,6 +295,7 @@ const SearchBooking: React.FC = () => {
               layoutMode={DetailsListLayoutMode.justified}
               isHeaderVisible={true}
               onItemInvoked={_onItemInvoked}
+              onRenderItemColumn={_renderItemColumn}
             />
           </Stack>
         )}
