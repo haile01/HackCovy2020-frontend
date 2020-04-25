@@ -28,11 +28,7 @@ const _Navbar: React.FC = (props: any) => {
       </Nav.Link>
       <Nav.Link onClick={() => signOut()}>Sign out</Nav.Link>
     </Nav>
-  ) : (
-    <Nav>
-      <Nav.Link onClick={() => history.push('/signin')}>Sign in</Nav.Link>
-    </Nav>
-  );
+  ) : null;
 
   return (
     <Navbar bg="white" expand="lg">
