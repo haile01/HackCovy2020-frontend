@@ -3,11 +3,12 @@ import { Pivot, PivotItem } from 'office-ui-fabric-react/lib/Pivot';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Separator } from 'office-ui-fabric-react/lib/Separator';
 import { Image } from 'office-ui-fabric-react/lib/Image';
-import { DetailsList, IColumn, IDetailsHeaderProps, DetailsHeader } from 'office-ui-fabric-react/lib/DetailsList';
+import { DetailsList, IColumn } from 'office-ui-fabric-react/lib/DetailsList';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown';
 import { connect } from 'react-redux';
+import { Stack, IStackStyles, IStackProps } from 'office-ui-fabric-react/lib/Stack';
 
 import { setUser } from '../../actions/userAction'
 import api from '../../utils/api';
@@ -86,10 +87,10 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
   }, [user._id])
 
   const _columns = [ 
-    { key: 'time', name: 'Thời gian', fieldName: 'time', minWidth: 100, maxWidth: 200, isResizable: true },
-    { key: 'startTime', name: 'Bắt đầu', fieldName: 'startTime', minWidth: 200, maxWidth: 300 },
-    { key: 'endTime', name: 'Kết thúc', fieldName: 'endTime', minWidth: 200, maxWidth: 300 },
-    { key: 'delete', name: '', fieldName: 'delete', minWidth: 200, maxWidth: 300 },
+    { key: 'time', name: 'Thời gian', fieldName: 'time', minWidth: 200, maxWidth: 200, isResizable: true },
+    { key: 'startTime', name: 'Bắt đầu', fieldName: 'startTime', minWidth: 150, maxWidth: 200 },
+    { key: 'endTime', name: 'Kết thúc', fieldName: 'endTime', minWidth: 150, maxWidth: 200 },
+    { key: 'delete', name: '', fieldName: 'delete', minWidth: 200, maxWidth: 200 },
   ]
 
   const deleteRow = (index) => {
@@ -146,7 +147,7 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
       case 'endTime':
         return <Dropdown onChange={chooseTime(index)} selectedKey={item} options={endTimeGroups} placeholder="Nhập thời gian kết thúc"/>;
       case 'delete':
-        return <DefaultButton onClick={() => deleteRow(index)} text="Xoá thời gian"/>
+        return <DefaultButton styles={{ root: { margin: 'auto' } }} onClick={() => deleteRow(index)} text="Xoá thời gian"/>
       default:
         return <Label>{`Ca thứ ${index}`}</Label>;
     }
@@ -329,10 +330,17 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
       }
     })
   }
+  
+  const stackStyles: Partial<IStackStyles> = { root: { width: 900, margin: 'auto' } };
+
+  const columnProps: Partial<IStackProps> = {
+    tokens: { childrenGap: 15 },
+    styles: { root: { width: 350, float: 'left' } },
+  };
 
   return (
     <div className="profile">
-      <Pivot>
+      <Pivot styles={{root: { marginBottom: 20 } } }>
         <PivotItem headerText="Thông tin">
           <Separator><h3>Thông tin cá nhân</h3></Separator>
           <Label>{user.fullName}</Label>
@@ -342,67 +350,83 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
         <PivotItem headerText="Thời gian làm việc">
           <form onSubmit={changeTime}>
             <Separator><h3>Thời gian làm việc trong tuần này</h3></Separator>
-            {user.availableTimeBlock && <DetailsList
-              onRenderItemColumn={_onRenderItemColumnTime}
-              items={user.availableTimeBlock.flat()}
-              groups={groups}
-              columns={_columns}
-              groupProps={{
-                showEmptyGroups: true,
-              }}
-              compact={true}
-              checkboxVisibility={2}
-            />}
+            <Stack horizontal tokens={{ childrenGap: 100 }} styles={stackStyles}>
+              {user.availableTimeBlock && <DetailsList
+                onRenderItemColumn={_onRenderItemColumnTime}
+                items={user.availableTimeBlock.flat()}
+                groups={groups}
+                columns={_columns}
+                groupProps={{
+                  showEmptyGroups: true,
+                }}
+                compact={true}
+                checkboxVisibility={2}
+              />}
+            </Stack>
             <PrimaryButton type="submit" text="Thay đổi thời gian làm việc"/>
           </form>
         </PivotItem>
         <PivotItem headerText="Đổi mật khẩu">
           <form onSubmit={changePassword}>
             <Separator><h3>Đổi mật khẩu</h3></Separator>
-            <TextField type="password" onChange={(e, value) => _onChange(value, 0)} value={form[0]} label="Nhập mật khẩu cũ"/>
-            <TextField type="password" onChange={(e, value) => _onChange(value, 1)} onBlur={checkMatch} value={form[1]} label="Nhập mật khẩu mới"/>
-            <TextField type="password" onChange={(e, value) => _onChange(value, 2)} onBlur={checkMatch} errorMessage={error} value={form[2]} label="Nhập lại mật khẩu mới"/>
-            <PrimaryButton type="submit" text="Thay đổi mật khẩu"/>
+            <Stack styles={stackStyles}>
+              <TextField type="password" onChange={(e, value) => _onChange(value, 0)} value={form[0]} label="Nhập mật khẩu cũ"/>
+              <TextField type="password" onChange={(e, value) => _onChange(value, 1)} onBlur={checkMatch} value={form[1]} label="Nhập mật khẩu mới"/>
+              <TextField type="password" onChange={(e, value) => _onChange(value, 2)} onBlur={checkMatch} errorMessage={error} value={form[2]} label="Nhập lại mật khẩu mới"/>
+              <PrimaryButton type="submit" text="Thay đổi mật khẩu"/>
+            </Stack>
           </form>
         </PivotItem>
         <PivotItem headerText="[Admin] Quản lý khoa">
           <div>
-              <Separator>Quản lý các khoa của bệnh viện</Separator>
-              <DetailsList
-                items={groupItems}
-                columns={groupColumns}
-                onRenderItemColumn={_onRenderItemColumnGroup}
-                checkboxVisibility={2}
-              />
-              <TextField onChange={(e, value) => _onChange(value, 3)} label="Tạo khoa mới"/>
-              <TextField onChange={(e, value) => _onChange(value, 4)} label="Mô tả khoa"/>
-              <DefaultButton onClick={createGroup} text="Tạo khoa"/>
+              <Separator><h3>Quản lý các khoa của bệnh viện</h3></Separator>
+              <Stack horizontal tokens={{ childrenGap: 100 }} styles={stackStyles}>
+                <Stack {...columnProps}>
+                  <DetailsList
+                    items={groupItems}
+                    columns={groupColumns}
+                    onRenderItemColumn={_onRenderItemColumnGroup}
+                    checkboxVisibility={2}
+                  />
+                </Stack>
+                <Stack {...columnProps}>
+                  <TextField onChange={(e, value) => _onChange(value, 3)} label="Tạo khoa mới"/>
+                  <TextField onChange={(e, value) => _onChange(value, 4)} label="Mô tả khoa"/>
+                  <PrimaryButton onClick={createGroup} text="Tạo khoa"/>
+                </Stack>
+              </Stack>
           </div>
         </PivotItem>
         <PivotItem headerText="[Admin] Quản lý bác sĩ">
           <div>
-              <Separator>Quản lý các bác sĩ của bệnh viện</Separator>
-              <DetailsList
-                items={doctorItems}
-                columns={doctorColumns}
-                onRenderItemColumn={_onRenderItemColumnDoctor}
-                checkboxVisibility={2}
-              />
-              <TextField onChange={(e, value) => _onChange(value, 5)} label="Tạo bác sĩ mới"/>
-              <TextField onChange={(e, value) => _onChange(value, 6)} label="Tài khoản"/>
-              <TextField onChange={(e, value) => _onChange(value, 7)} label="Mật khẩu"/>
-              <TextField onChange={(e, value) => _onChange(value, 8)} label="Số điện thoại"/>
-              <TextField onChange={(e, value) => _onChange(value, 9)} type="email" label="Email"/>
-              <TextField onChange={(e, value) => _onChange(value, 10)} label="CMND"/>
-              <Dropdown  
-                onChange={(e, value) => _onChange(value, 11)} 
-                options={groupItems.map(g => ({
-                  key: g.id,
-                  value: g.id,
-                  text: g.name + ' - ' + g.desc
-                }))} 
-                label="Chọn khoa" required/>
-              <DefaultButton onClick={createDoctor} text="Tạo bác sĩ"/>
+              <Separator><h3>Quản lý các bác sĩ của bệnh viện</h3></Separator>
+              <Stack horizontal tokens={{ childrenGap: 100 }} styles={stackStyles}>
+                <Stack {...columnProps}>
+                  <DetailsList
+                    items={doctorItems}
+                    columns={doctorColumns}
+                    onRenderItemColumn={_onRenderItemColumnDoctor}
+                    checkboxVisibility={2}
+                  />
+                </Stack>
+                <Stack {...columnProps}>
+                  <TextField onChange={(e, value) => _onChange(value, 5)} label="Tạo bác sĩ mới"/>
+                  <TextField onChange={(e, value) => _onChange(value, 6)} label="Tài khoản"/>
+                  <TextField onChange={(e, value) => _onChange(value, 7)} label="Mật khẩu"/>
+                  <TextField onChange={(e, value) => _onChange(value, 8)} label="Số điện thoại"/>
+                  <TextField onChange={(e, value) => _onChange(value, 9)} type="email" label="Email"/>
+                  <TextField onChange={(e, value) => _onChange(value, 10)} label="CMND"/>
+                  <Dropdown  
+                    onChange={(e, value) => _onChange(value, 11)} 
+                    options={groupItems.map(g => ({
+                      key: g.id,
+                      value: g.id,
+                      text: g.name + ' - ' + g.desc
+                    }))} 
+                    label="Chọn khoa" required/>
+                  <PrimaryButton onClick={createDoctor} text="Tạo bác sĩ"/>
+                </Stack>
+              </Stack>
           </div>
         </PivotItem>
       </Pivot>

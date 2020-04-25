@@ -9,6 +9,8 @@ import { DefaultButton, PrimaryButton, IButtonProps } from 'office-ui-fabric-rea
 import { TeachingBubble } from 'office-ui-fabric-react/lib/TeachingBubble'
 import { DetailsList, DetailsListLayoutMode, Selection } from 'office-ui-fabric-react/lib/DetailsList'
 import { MarqueeSelection } from 'office-ui-fabric-react/lib/MarqueeSelection';
+import { Stack, IStackProps, IStackStyles } from 'office-ui-fabric-react/lib/Stack';
+
 
 import api from '../../utils/api';
 import history from '../../utils/history';
@@ -182,11 +184,6 @@ const Booking: React.FC = () => {
     }
   }
 
-  const _secondaryButtonProps: IButtonProps = {
-    children: "Không, đây là lần đầu tiên của tôi",
-    onClick: toggleCheckBubble
-  }
-
   let _selection : Selection = new Selection({
     onSelectionChanged: () => {
       const selections: any = _selection.getSelection().sort((a: any, b: any) => a.value - b.value);
@@ -207,50 +204,70 @@ const Booking: React.FC = () => {
     { key: 'column2', name: 'Đến', fieldName: 'endTime', minWidth: 100, maxWidth: 200, isResizable: true },
   ];
 
+  const columnProps: Partial<IStackProps> = {
+    tokens: { childrenGap: 15 },
+    styles: { root: { width: 350, float: 'left' } },
+  };
+
+  const stackStyles: Partial<IStackStyles> = { root: { width: 800, margin: 'auto' } };
+
   return (
     <div className="booking">
       <form onSubmit={_onSubmit}>
         <Separator><h3>Thông tin cá nhân</h3></Separator>
-        <TextField   onChange={(e, value) => _onChange(value, 0)} value={form[0]} label="Số điện thoại" required/>
-        <DefaultButton id="checkPrevious" text="Kiểm tra" onClick={toggleCheckBubble}/>
-        {
-          checkBubble && (
-          <TeachingBubble target="#checkPrevious" 
-                        primaryButtonProps={_primaryButtonProps} 
-                        secondaryButtonProps={_secondaryButtonProps}
-                        headline="Tự động điền thông tin"
-                        onDismiss={toggleCheckBubble}
-                        >
-            Nếu bạn đã dùng thông tin này cho những hồ sơ trước, hãy để chúng tôi điền thông tin cho bạn
-          </TeachingBubble>
-        )}
-        <TextField   onChange={(e, value) => _onChange(value, 1)} value={form[1]} label="CMND" required/>
-        <TextField   onChange={(e, value) => _onChange(value, 2)} value={form[2]} label="Tên" required/>
-        <ChoiceGroup onChange={(e, value) => _onChange(value, 3)} selectedKey={form[3].toString()} label="Giới tính" defaultSelectedKey="m" options={genderOptions} required/>
-        <DatePicker onSelectDate={(value) => _onChange(value, 4)} value={form[4]} label="Ngày sinh" placeholder="Chọn ngày..."/>
-        <TextField   onChange={(e, value) => _onChange(value, 5)} value={form[5]} label="Địa chỉ" required/>
-        <TextField   onChange={(e, value) => _onChange(value, 6)} value={form[6]} label="BHYT" required/>
+        <Stack horizontal tokens={{ childrenGap: 100 }} styles={stackStyles}>
+          <Stack {...columnProps}>
+          
+            <TextField   onChange={(e, value) => _onChange(value, 0)} value={form[0]} label="Số điện thoại" required/>
+            <DefaultButton id="checkPrevious" text="Kiểm tra" onClick={toggleCheckBubble}/>
+            {
+              checkBubble && (
+              <TeachingBubble
+                            target="#checkPrevious" 
+                            primaryButtonProps={_primaryButtonProps}
+                            headline="Tự động điền thông tin"
+                            onDismiss={toggleCheckBubble}
+                            >
+                Nếu bạn đã dùng thông tin này cho những hồ sơ trước, hãy để chúng tôi điền thông tin cho bạn
+              </TeachingBubble>
+            )}
+            <TextField   onChange={(e, value) => _onChange(value, 1)} value={form[1]} label="CMND" required/>
+            <TextField   onChange={(e, value) => _onChange(value, 2)} value={form[2]} label="Tên" required/>
+          </Stack>
+          <Stack {...columnProps}>
+            <DatePicker onSelectDate={(value) => _onChange(value, 4)} value={form[4]} label="Ngày sinh" placeholder="Chọn ngày..."/>
+            <TextField   onChange={(e, value) => _onChange(value, 5)} value={form[5]} label="Địa chỉ" required/>
+            <TextField   onChange={(e, value) => _onChange(value, 6)} value={form[6]} label="BHYT" required/>
+            <ChoiceGroup onChange={(e, value) => _onChange(value, 3)} selectedKey={form[3].toString()} label="Giới tính" defaultSelectedKey="m" options={genderOptions} required/>
+          </Stack>
+        </Stack>
         <Separator><h3>Thông tin thanh toán</h3></Separator>
         Cummin' soon
         <Separator><h3>Đăng kí khám bệnh</h3></Separator>
-        <Dropdown  onChange={(e, value) => _onChange(value, 7)} options={groups} label="Chọn khoa" required/>
-        <Dropdown  onChange={(e, value) => _onChange(value, 8)} options={doctors} label="Chọn bác sĩ" required/>
-        <TextField onChange={(e, value) => _onChange(value, 9)} label="Mô tả" required/>
-        <TextField onChange={(e, value) => _onChange(value, 10)} label="Triệu chứng (chỉ cách nhau bởi dấu phẩy)"/>
-        <Dropdown  onChange={(e, value) => _onChange(value, 11)} options={dayOptions} label="Chọn ngày khám"required/>
-        <MarqueeSelection selection={_selection}>
-          <DetailsList
-            items={timeItems}
-            columns={timeColumns}
-            setKey="set"
-            layoutMode={DetailsListLayoutMode.justified}
-            selection={_selection}
-            selectionPreservedOnEmptyClick={true}
-            ariaLabelForSelectionColumn="Toggle selection"
-            ariaLabelForSelectAllCheckbox="Toggle selection for all items"
-            checkButtonAriaLabel="Row checkbox"
-          />
-        </MarqueeSelection>
+        <Stack horizontal tokens={{ childrenGap: 100 }} styles={stackStyles}>
+          <Stack {...columnProps}>
+            <Dropdown  onChange={(e, value) => _onChange(value, 7)} options={groups} label="Chọn khoa" required/>
+            <Dropdown  onChange={(e, value) => _onChange(value, 8)} options={doctors} label="Chọn bác sĩ" required/>
+            <TextField onChange={(e, value) => _onChange(value, 9)} label="Mô tả" required/>
+            <TextField onChange={(e, value) => _onChange(value, 10)} label="Triệu chứng (chỉ cách nhau bởi dấu phẩy)"/>
+            <Dropdown  onChange={(e, value) => _onChange(value, 11)} options={dayOptions} label="Chọn ngày khám"required/>
+          </Stack>
+          <Stack {...columnProps}>
+          <MarqueeSelection selection={_selection}>
+            <DetailsList
+              items={timeItems}
+              columns={timeColumns}
+              setKey="set"
+              layoutMode={DetailsListLayoutMode.justified}
+              selection={_selection}
+              selectionPreservedOnEmptyClick={true}
+              ariaLabelForSelectionColumn="Toggle selection"
+              ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+              checkButtonAriaLabel="Row checkbox"
+            />
+          </MarqueeSelection>
+          </Stack>
+        </Stack>
         <PrimaryButton type="submit" text="Đăng kí khám bệnh"/>
       </form>
     </div>

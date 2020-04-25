@@ -3,11 +3,10 @@ import { TextField } from 'office-ui-fabric-react/lib/TextField'
 import {
   DetailsList,
   DetailsListLayoutMode,
-  Selection,
   SelectionMode,
-  IColumn,
 } from 'office-ui-fabric-react/lib/DetailsList'
 import omit from 'lodash/omit'
+import { Stack, IStackStyles } from 'office-ui-fabric-react/lib/Stack';
 
 import history from '../../utils/history'
 import api from '../../utils/api'
@@ -118,9 +117,13 @@ const SearchBooking: React.FC = () => {
     history.push('meet/' + item._id);
   }
 
+  const stackStyles: Partial<IStackStyles> = { root: { width: 900, margin: 'auto' } };
+
   return (
     <div className="search-booking">
-      <TextField onChange={_onChange} label="Tìm kiếm lịch hẹn"/>
+      <Stack styles={stackStyles}>
+        <TextField onChange={_onChange} label="Tìm kiếm lịch hẹn"/>
+      </Stack>
       <div className="results">
         <DetailsList
           items={items}
@@ -135,7 +138,6 @@ const SearchBooking: React.FC = () => {
         />
       </div>
     </div>
-    
   )
 }
 

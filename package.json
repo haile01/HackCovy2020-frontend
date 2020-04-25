@@ -10,9 +10,7 @@
     "@types/jest": "^24.0.0",
     "@types/lodash": "^4.14.150",
     "@types/node": "^12.0.0",
-    "bootstrap": "^4.4.1",
     "react": "^16.13.1",
-    "react-bootstrap": "^1.0.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
     "typescript": "~3.7.2"
@@ -46,11 +44,13 @@
     "@types/react-router": "^5.1.5",
     "@zoomus/websdk": "^1.7.6",
     "axios": "^0.19.2",
+    "bootstrap": "^4.4.1",
     "connected-react-router": "^6.8.0",
     "dotenv": "^8.2.0",
     "history": "^4.10.1",
     "jquery": "^3.5.0",
     "lodash": "^4.17.15",
+    "react-bootstrap": "^1.0.1",
     "react-redux": "^7.2.0",
     "react-router": "^5.1.2",
     "redux": "^4.0.5"
