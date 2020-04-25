@@ -36,7 +36,6 @@ code {
 .hp-content {
   height: 100%;
   padding-top: 100px;
-  top: 50;
 }
 
 .hp-brand {
@@ -46,4 +45,14 @@ code {
 
 .hp-slogan {
   color: #fff !important;
+}
+
+.hp-lookup-content {
+  height: 100%;
+  padding-top: 50px;
+}
+
+.hp-lookup-container {
+  height: 240px;
+  background-color: #305673;
 }
