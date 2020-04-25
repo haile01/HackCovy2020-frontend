@@ -35,12 +35,12 @@ const _Navbar: React.FC = (props: any) => {
   );
 
   return (
-    <Navbar bg="light" expand="lg">
-      <Navbar.Brand href="#home">Homespital</Navbar.Brand>
+    <Navbar bg="white" expand="lg">
+      <Navbar.Brand href="/">Homespital</Navbar.Brand>
       <Navbar.Toggle aria-controls="basic-navbar-nav" />
       <Navbar.Collapse id="basic-navbar-nav">
         <Nav className="mr-auto">
-          <Nav.Link href="/">Home</Nav.Link>
+          <Nav.Link onClick={() => history.push("/")}>Home</Nav.Link>
           <Nav.Link onClick={() => history.push("/book")}>Booking</Nav.Link>
           <Nav.Link onClick={() => history.push("/search")}>Look up</Nav.Link>
         </Nav>
