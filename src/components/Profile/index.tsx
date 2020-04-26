@@ -370,14 +370,14 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
               item.bookingDateTimestamp +
                 15 * 60000 * (item.endBlockTimeIndex + 1)
             );
-            let label = "";
+            let label = "Cannot recognize";
             if (item.attachments.length) 
               label = await api.imageLabel({ path: item.attachments[0] }).then((res: any) => {
                 if (res.data.label.data) {
-                  return res.data.label.data.CustomLabels.map((l: any) => map[l.Name]);
+                  return res.data.label.data.CustomLabels.map((l: any) => (map[l.Name] + " -  " + l.Confidence));
                 }
                 else {
-                  return "";
+                  return "Cannot recognize";
                 }
               });
           return omit(
@@ -502,7 +502,7 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
     let  fieldContent = item[column.fieldName];
     switch (column.key) {
       case "column3": {
-        if (fieldContent !== "") fieldContent = fieldContent.join(", ");
+        if (typeof fieldContent !== typeof("")) fieldContent = fieldContent.join(", ");
         console.log('label', fieldContent);
         return <span>{fieldContent}</span>;
       }
