@@ -21,3 +21,7 @@
   background-color: #007bff;
   color: white;
 }
+
+body {
+  overflow: scroll !important;
+}

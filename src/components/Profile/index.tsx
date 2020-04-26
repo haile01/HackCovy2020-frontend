@@ -509,7 +509,7 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
       case "column2": {
         return <Image src={fieldContent} width={100} height={100} imageFit={ImageFit.cover} />
       }
-      case "column5":
+      case "column6":
         return fieldContent === null ? (
           <span>Finished</span>
         ) : (
@@ -539,7 +539,7 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
         <PivotItem headerText="Thông tin">
           <Separator><h3>Thông tin cá nhân</h3></Separator>
           <Label>{user.fullName}</Label>
-          <Label>{user.role}</Label>
+          <Label>{(user.role === "user" ? "Doctor" : user.role)}</Label>
           <Image src={user.avatar || ""}/>
           <DetailsList
             items={bookings}
