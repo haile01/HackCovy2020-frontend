@@ -128,8 +128,7 @@ const SearchBooking: React.FC = () => {
     setFirstTimeVisit(false);
     let res: any = await api.searchBooking(query);
     if (res.data) {
-      res = await Promise.all(
-        res.data.map(async (item: any, index: number) => {
+        res.data.map((item: any, index: number) => {
           const doctorName = item.doctor.fullName,
             startTime = new Date(
               item.bookingDateTimestamp + 15 * 60000 * item.startBlockTimeIndex
@@ -150,8 +149,7 @@ const SearchBooking: React.FC = () => {
             },
             ["bookingDateTimestamp", "startBlockTimeIndex", "endBlockTimeIndex"]
           );
-        })
-      );
+        });
 
       setItems(res);
       setFormLoading(false);

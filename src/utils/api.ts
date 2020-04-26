@@ -44,9 +44,11 @@ const api = {
   createUser: (body: any) => new Promise(resolve => request.post("user/new", { ...body }).then((res: any) => resolve(res.data))),
   deleteUser: (query: any) => new Promise(resolve => request.delete("user/delete/" + query).then((res: any) => resolve(res.data))),
   getAllUsers: () => new Promise(resolve => request.get("users").then((res: any) => resolve(res.data))),
+  getMyBookings: () => new Promise(resolve => request.get("booking/me").then((res: any) => resolve(res.data))),
   updateTimeBlock: (body: any) => new Promise(resolve => request.patch("user/me/available-time", { ...body }).then((res: any) => resolve(res.data))),
   generateSignedUrl: (body: any) => new Promise(resolve => request.post("aws/generate-signed-url", { ...body }).then((res: any) => resolve(res.data))),
   uploadImage: (config: any) => new Promise(resolve => axios(config). then((res: any) => resolve(res))),
+  imageLabel: (body: any) => new Promise(resolve => request.post("attachment", { ...body }).then((res: any) => resolve(res.data))),
   // getGroups: () => new Promise(resolve => resolve({
   //   success: true,
   //   data: [

@@ -2,16 +2,40 @@ import React, { useEffect, useState } from 'react'
 import { Pivot, PivotItem } from 'office-ui-fabric-react/lib/Pivot';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Separator } from 'office-ui-fabric-react/lib/Separator';
-import { Image } from 'office-ui-fabric-react/lib/Image';
-import { DetailsList, IColumn } from 'office-ui-fabric-react/lib/DetailsList';
+import {
+  DetailsList,
+  DetailsListLayoutMode,
+  SelectionMode,
+  IColumn
+} from "office-ui-fabric-react/lib/DetailsList";
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown';
 import { connect } from 'react-redux';
 import { Stack, IStackStyles, IStackProps } from 'office-ui-fabric-react/lib/Stack';
+import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
+import { omit } from 'lodash'
+import { ZoomMtg } from "@zoomus/websdk";
 
 import { setUser } from '../../actions/userAction'
 import api from '../../utils/api';
+
+ZoomMtg.setZoomJSLib("https://source.zoom.us/1.7.6/lib", "/av");
+ZoomMtg.preLoadWasm();
+ZoomMtg.prepareJssdk();
+
+const API_KEY = "dXUjsOe2THCVHLUFcuA_JA";
+const API_SECRET = "KDn6c6NYqTvqQSsc2lsNtulUZ969pB9wBSqW";
+const password = "8tfXvC";
+
+const map = {
+  'bcc': 'ung thư biểu mô tế bào đáy',
+  'bkl': 'dày sừng tiết bã',
+  'df': 'u da lành tính',
+  'nv': 'nốt ruồi',
+  'mel': 'ung thư tế bào hắc tố hay u sắc tố',
+  'vasc': 'tổn thương mạch máu da'
+}
 
 export interface ProfileProps {
   id: string;
@@ -331,6 +355,177 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
     })
   }
   
+  let [bookings, setBooking] = useState([])
+
+  useEffect(() => {
+    api.getMyBookings().then(async (res: any) => {
+      if (res.success) {
+        console.log(res.data);
+        res.data = await Promise.all(res.data.map(async (item: any, index: number) => {
+            console.log('item', item);
+            const startTime = new Date(
+              item.bookingDateTimestamp + 15 * 60000 * item.startBlockTimeIndex
+            ),
+            endTime = new Date(
+              item.bookingDateTimestamp +
+                15 * 60000 * (item.endBlockTimeIndex + 1)
+            );
+            let label = "";
+            if (item.attachments.length) 
+              label = await api.imageLabel({ path: item.attachments[0] }).then((res: any) => {
+                if (res.data.label.data) {
+                  return res.data.label.data.CustomLabels.map((l: any) => map[l.Name]);
+                }
+                else {
+                  return "";
+                }
+              });
+          return omit(
+            {
+              ...item,
+              label: label,
+              attachments: item.attachments[0],
+              key: index,
+              startTime: startTime.toDateString() + " - " + startTime.toTimeString(),
+              endTime: endTime.toDateString() + " - " + endTime.toTimeString(),
+              meetingId: item.status !== "RUNNING" ? null : item.zoomMeetingId,
+            },
+            ["bookingDateTimestamp", "startBlockTimeIndex", "endBlockTimeIndex"]
+          );
+        }));
+        console.log('bookings', res.data)
+        setBooking(res.data);
+      }
+    })
+  }, [bookings.length])
+
+  const columns = [
+  {
+    key: "column1",
+    name: "Registered name",
+    className: "name",
+    fieldName: "name",
+    minWidth: 100,
+    maxWidth: 170,
+  },
+  {
+    key: "column2",
+    name: "Attatchments",
+    className: "attachments",
+    fieldName: "attachments",
+    minWidth: 100,
+    maxWidth: 170,
+  },
+  {
+    key: "column3",
+    name: "Diagnostic",
+    className: "label",
+    fieldName: "label",
+    minWidth: 100,
+    maxWidth: 170,
+  },
+  {
+    key: "column4",
+    name: "Start time",
+    className: "startTime",
+    fieldName: "startTime",
+    minWidth: 250,
+    maxWidth: 350,
+  },
+  {
+    key: "column5",
+    name: "End time",
+    className: "endTime",
+    fieldName: "endTime",
+    minWidth: 250,
+    maxWidth: 350,
+  },
+  {
+    key: "column6",
+    name: "Action",
+    className: "meetingId",
+    fieldName: "meetingId",
+    minWidth: 250,
+    maxWidth: 350,
+  },
+  ]
+
+  const joinMeeting = (meetingNumber: any) => {
+    const zoomRoot = document.getElementById("zmmtg-root");
+    zoomRoot.style.display = "block";
+    const meetConfig = {
+      apiKey: API_KEY,
+      apiSecret: API_SECRET,
+      meetingNumber: meetingNumber,
+      passWord: password,
+      leaveUrl: document.location.href,
+      role: 0,
+      userName: "Patient",
+    };
+    try {
+      var signature = ZoomMtg.generateSignature({
+        meetingNumber: meetConfig.meetingNumber,
+        apiKey: meetConfig.apiKey,
+        apiSecret: meetConfig.apiSecret,
+        role: meetConfig.role,
+        success() {},
+      });
+
+      ZoomMtg.init({
+        leaveUrl: meetConfig.leaveUrl,
+        isSupportAV: true,
+        success: function () {
+          ZoomMtg.join({
+            meetingNumber: meetConfig.meetingNumber,
+            userName: meetConfig.userName,
+            signature: signature,
+            apiKey: meetConfig.apiKey,
+            passWord: meetConfig.passWord,
+            success: function (res) {
+              console.log("join meeting success");
+            },
+            error: function (res) {
+              console.log(res);
+            },
+          });
+        },
+        error: function (res) {
+          console.log(res);
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  function _renderItemColumn(item: any, index: number, column: IColumn) {
+    let  fieldContent = item[column.fieldName];
+    switch (column.key) {
+      case "column3": {
+        if (fieldContent !== "") fieldContent = fieldContent.join(", ");
+        console.log('label', fieldContent);
+        return <span>{fieldContent}</span>;
+      }
+      case "column2": {
+        return <Image src={fieldContent} width={100} height={100} imageFit={ImageFit.cover} />
+      }
+      case "column5":
+        return fieldContent === null ? (
+          <span>Finished</span>
+        ) : (
+          <PrimaryButton
+            text="Join meeting"
+            onClick={() => joinMeeting(fieldContent)}
+            allowDisabledFocus
+          />
+        );
+      default:
+        return <span>{fieldContent}</span>;
+    }
+  }
+  
+  const _getKey = (item: any) => item.key;
+
   const stackStyles: Partial<IStackStyles> = { root: { width: 900, margin: 'auto' } };
 
   const columnProps: Partial<IStackProps> = {
@@ -346,6 +541,17 @@ const Profile: React.FC <ProfileProps> = (props: ProfileProps) => {
           <Label>{user.fullName}</Label>
           <Label>{user.role}</Label>
           <Image src={user.avatar || ""}/>
+          <DetailsList
+            items={bookings}
+            compact={false}
+            columns={columns}
+            selectionMode={SelectionMode.none}
+            getKey={_getKey}
+            setKey="none"
+            layoutMode={DetailsListLayoutMode.justified}
+            isHeaderVisible={true}
+            onRenderItemColumn={_renderItemColumn}
+            />
         </PivotItem>
         <PivotItem headerText="Thời gian làm việc">
           <form onSubmit={changeTime}>

@@ -147,7 +147,7 @@ const Booking: React.FC = () => {
       bookingDateTimestamp: form[14],
       startBlockTimeIndex: form[12],
       endBlockTimeIndex: form[13],
-      attachments: [form[15]],
+      attachments: form[15],
     }
     console.log(body)
     api.book(body).then((res: any) => {
@@ -231,7 +231,7 @@ const Booking: React.FC = () => {
     _res.forEach((r, index) => {
       api.uploadImage({
         url: r.signedRequest,
-        type: 'PUT',
+        method: 'PUT',
         dataType: 'html',
         processData: false,
         headers: {'Content-Type': files[index].type},
@@ -281,7 +281,7 @@ const Booking: React.FC = () => {
                       <TeachingBubble
                                     target="#checkPrevious" 
                                     primaryButtonProps={_primaryButtonProps}
-                                    headline="Tự động điền thông tin"
+                                    headline="Ok, let's autofill"
                                     onDismiss={toggleCheckBubble}
                                     >
                         If you've already used this before, let us fill in this part for you
@@ -308,8 +308,8 @@ const Booking: React.FC = () => {
                     <Dropdown  onChange={(e, value) => _onChange(value, 8)} options={doctors} label="Choose doctor" required/>
                     <TextField onChange={(e, value) => _onChange(value, 9)} label="Description" required/>
                     <TextField onChange={(e, value) => _onChange(value, 10)} label="Symptoms (separated by only a coma)"/>
-                    <Dropdown  onChange={(e, value) => _onChange(value, 11)} options={dayOptions} label="Choose date"required/>
-                    <input type="file" onChange={upLoadImage} multiple/>
+                    <Dropdown  onChange={(e, value) => _onChange(value, 11)} options={dayOptions} label="Choose date" required/>
+                    <input type="file" onChange={upLoadImage} multiple required/>
                   </Stack>
                   <Stack {...columnProps}>
                   <MarqueeSelection selection={_selection}>
