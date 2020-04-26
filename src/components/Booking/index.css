@@ -11,7 +11,7 @@
   opacity: 0.8;
 }
 
-h3 {
+.booking h3 {
   transform: translateX(-15px);
   height: 100px;
   width: 1000px;

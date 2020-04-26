@@ -10,11 +10,18 @@ import { TeachingBubble } from 'office-ui-fabric-react/lib/TeachingBubble'
 import { DetailsList, DetailsListLayoutMode, Selection } from 'office-ui-fabric-react/lib/DetailsList'
 import { MarqueeSelection } from 'office-ui-fabric-react/lib/MarqueeSelection';
 import { Stack, IStackProps, IStackStyles } from 'office-ui-fabric-react/lib/Stack';
+import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { Container, Row, Col } from 'react-bootstrap';
 import './index.css'
 
 import api from '../../utils/api';
 import history from '../../utils/history';
+
+declare global {
+  interface FileList {
+      forEach(callback: (f: File) => void) : void;
+  }
+}
 
 export interface IDetailsListBasic {
   key: number;
@@ -32,19 +39,19 @@ export interface TimeItem {
 const Booking: React.FC = () => {
 
   const genderOptions = [
-    { key: 'male', value: 'male', text: 'Nam' },
-    { key: 'female', value: 'female', text: 'Nữ' },
-    { key: 'lgbt', value: 'lgbt', text: 'Không muốn tiết lộ' },
+    { key: 'male', value: 'male', text: 'Male' },
+    { key: 'female', value: 'female', text: 'Female' },
+    { key: 'lgbt', value: 'lgbt', text: 'Other' },
   ]
 
   const dayOptions = [
-    { key: '0', value: 0, text: 'Chủ nhật' },
-    { key: '1', value: 1, text: 'Thứ hai' },
-    { key: '2', value: 2, text: 'Thứ ba' },
-    { key: '3', value: 3, text: 'Thứ tư' },
-    { key: '4', value: 4, text: 'Thứ năm' },
-    { key: '5', value: 5, text: 'Thứ sáu' },
-    { key: '6', value: 6, text: 'Thứ bảy' },
+    { key: '0', value: 0, text: 'Sunday' },
+    { key: '1', value: 1, text: 'Monday' },
+    { key: '2', value: 2, text: 'Tuesday' },
+    { key: '3', value: 3, text: 'Wednesday' },
+    { key: '4', value: 4, text: 'Thursday' },
+    { key: '5', value: 5, text: 'Friday' },
+    { key: '6', value: 6, text: 'Saturday' },
   ]
 
   let [groups, setGroups] = useState([] as IDropdownOption[]);
@@ -121,6 +128,8 @@ const Booking: React.FC = () => {
     forceReRender();
   }
 
+  let [error, setError] = useState("");
+
   const _onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (form[12] === "" || form[13] === "") return;
@@ -147,7 +156,7 @@ const Booking: React.FC = () => {
         history.push('/search')
       }
       else {
-        // error
+        setError(res.error);
       }
     })
   }
@@ -202,34 +211,36 @@ const Booking: React.FC = () => {
   });
 
   const timeColumns = [
-    { key: 'column1', name: 'Từ', fieldName: 'startTime', minWidth: 100, maxWidth: 200, isResizable: true },
-    { key: 'column2', name: 'Đến', fieldName: 'endTime', minWidth: 100, maxWidth: 200, isResizable: true },
+    { key: 'column1', name: 'From', fieldName: 'startTime', minWidth: 100, maxWidth: 200, isResizable: true },
+    { key: 'column2', name: 'To', fieldName: 'endTime', minWidth: 100, maxWidth: 200, isResizable: true },
   ];
 
-  const upLoadImage = (e: React.FormEvent<HTMLInputElement>) => {
+  const upLoadImage = async (e: React.FormEvent<HTMLInputElement>) => {
     e.preventDefault();
-    var files = (e.target as HTMLInputElement).files[0];
-    var fileName = (new Date()).getTime() + files.name;
-    const body = {
-      fileName,
-      fileType: files.type
+    var files = (e.target as HTMLInputElement).files;
+    let body = [];
+    for (var i = 0; i < files.length; i++) {
+      let f = files[i];
+      body.push({
+        fileName: (new Date()).getTime() + f.name,
+        fileType: f.type
+      })
     }
-    api.generateSignedUrl(body).then((res: any) => {
-      console.log(res);
-      if (res.url) {
-        form[15] = res.url;
-        setForm(form);
-        api.uploadImage({
-          url: res.signedUrl,
-          data: files,
-          type: 'PUT',
-          dataType: 'html',
-          processData: false,
-          headers: {'Content-Type': files.type},
-          crossDomain: true,
-        })
-      }
+    console.log(body);
+    let _res = await Promise.all(body.map(b => api.generateSignedUrl(b).then((res: any) => res)))
+    _res.forEach((r, index) => {
+      api.uploadImage({
+        url: r.signedRequest,
+        type: 'PUT',
+        dataType: 'html',
+        processData: false,
+        headers: {'Content-Type': files[index].type},
+        crossDomain: true,
+        data: files[index]
+      })
     })
+    form[15] = _res.map(r => r.url);
+    setForm(form);
   }
 
   const columnProps: Partial<IStackProps> = {
@@ -239,20 +250,32 @@ const Booking: React.FC = () => {
 
   const stackStyles: Partial<IStackStyles> = { root: { width: 800, margin: 'auto' } };
 
+  const ErrorMessage = (props) => (
+    props.error != "" && <MessageBar
+      messageBarType={MessageBarType.error}
+      isMultiline={false}
+      dismissButtonAriaLabel="Close"
+    >
+      Error: {props.error}
+    </MessageBar>
+  );
+  
+  
+
   return (
     <div className="booking">
       <form onSubmit={_onSubmit}>
         <Container style={{ width: 1000, overflow: 'hidden', marginTop: 100, marginBottom: 100 }}>
-          <div style={{ width: 3000, display: 'flex', flexDirection: 'row', transform: 'translateX(0px)', transition: 'transform .3s ease-in-out' }}>
+          <div style={{ width: 2000, display: 'flex', flexDirection: 'row', transform: 'translateX(0px)', transition: 'transform .3s ease-in-out' }}>
             <Row>
               <Col style={{ position: 'relative', width: 1000 }}>
                 <NavRight/>
-                <h3>Thông tin cá nhân</h3>
+                <h3>Personal Information</h3>
                 <Stack horizontal tokens={{ childrenGap: 100 }} styles={stackStyles}>
                   <Stack {...columnProps}>
                   
-                    <TextField   onChange={(e, value) => _onChange(value, 0)} value={form[0]} label="Số điện thoại" required/>
-                    <PrimaryButton id="checkPrevious" text="Kiểm tra" onClick={toggleCheckBubble}/>
+                    <TextField   onChange={(e, value) => _onChange(value, 0)} value={form[0]} label="Telephone number" required/>
+                    <PrimaryButton id="checkPrevious" text="Autofill" onClick={toggleCheckBubble}/>
                     {
                       checkBubble && (
                       <TeachingBubble
@@ -261,37 +284,32 @@ const Booking: React.FC = () => {
                                     headline="Tự động điền thông tin"
                                     onDismiss={toggleCheckBubble}
                                     >
-                        Nếu bạn đã dùng thông tin này cho những hồ sơ trước, hãy để chúng tôi điền thông tin cho bạn
+                        If you've already used this before, let us fill in this part for you
                       </TeachingBubble>
                     )}
-                    <TextField   onChange={(e, value) => _onChange(value, 1)} value={form[1]} label="CMND" required/>
-                    <TextField   onChange={(e, value) => _onChange(value, 2)} value={form[2]} label="Tên" required/>
+                    <TextField   onChange={(e, value) => _onChange(value, 1)} value={form[1]} label="Identification" required/>
+                    <TextField   onChange={(e, value) => _onChange(value, 2)} value={form[2]} label="Full name" required/>
                   </Stack>
                   <Stack {...columnProps}>
-                    <DatePicker onSelectDate={(value) => _onChange(value, 4)} value={form[4]} label="Ngày sinh" placeholder="Chọn ngày..."/>
-                    <TextField   onChange={(e, value) => _onChange(value, 5)} value={form[5]} label="Địa chỉ" required/>
-                    <TextField   onChange={(e, value) => _onChange(value, 6)} value={form[6]} label="BHYT" required/>
-                    <ChoiceGroup onChange={(e, value) => _onChange(value, 3)} selectedKey={form[3].toString()} label="Giới tính" defaultSelectedKey="m" options={genderOptions} required/>
+                    <DatePicker onSelectDate={(value) => _onChange(value, 4)} value={form[4]} label="Date of birth" placeholder="Choose a date..."/>
+                    <TextField   onChange={(e, value) => _onChange(value, 5)} value={form[5]} label="Address" required/>
+                    <TextField   onChange={(e, value) => _onChange(value, 6)} value={form[6]} label="Medical Insurance" required/>
+                    <ChoiceGroup onChange={(e, value) => _onChange(value, 3)} selectedKey={form[3].toString()} label="Gender" options={genderOptions} required/>
                   </Stack>
                 </Stack>
               </Col>
               <Col style={{ position: 'relative', width: 1000 }}>
                 <NavLeft/>
-                <NavRight/>
-                <h3>Thông tin thanh toán</h3>
-                Cummin' soon...
-              </Col>
-              <Col style={{ position: 'relative', width: 1000 }}>
-                <NavLeft/>
-                <h3>Đăng kí khám bệnh</h3>
+                <h3>Register</h3>
                 <Stack horizontal tokens={{ childrenGap: 100 }} styles={stackStyles}>
                   <Stack {...columnProps}>
-                    <Dropdown  onChange={(e, value) => _onChange(value, 7)} options={groups} label="Chọn khoa" required/>
-                    <Dropdown  onChange={(e, value) => _onChange(value, 8)} options={doctors} label="Chọn bác sĩ" required/>
-                    <TextField onChange={(e, value) => _onChange(value, 9)} label="Mô tả" required/>
-                    <TextField onChange={(e, value) => _onChange(value, 10)} label="Triệu chứng (chỉ cách nhau bởi dấu phẩy)"/>
-                    <Dropdown  onChange={(e, value) => _onChange(value, 11)} options={dayOptions} label="Chọn ngày khám"required/>
-                    <input type="file" onChange={upLoadImage}/>
+                    <ErrorMessage error={error}/>
+                    <Dropdown  onChange={(e, value) => _onChange(value, 7)} options={groups} label="Choose department" required/>
+                    <Dropdown  onChange={(e, value) => _onChange(value, 8)} options={doctors} label="Choose doctor" required/>
+                    <TextField onChange={(e, value) => _onChange(value, 9)} label="Description" required/>
+                    <TextField onChange={(e, value) => _onChange(value, 10)} label="Symptoms (separated by only a coma)"/>
+                    <Dropdown  onChange={(e, value) => _onChange(value, 11)} options={dayOptions} label="Choose date"required/>
+                    <input type="file" onChange={upLoadImage} multiple/>
                   </Stack>
                   <Stack {...columnProps}>
                   <MarqueeSelection selection={_selection}>
@@ -309,7 +327,7 @@ const Booking: React.FC = () => {
                   </MarqueeSelection>
                   </Stack>
                 </Stack>
-                <PrimaryButton type="submit" text="Đăng kí khám bệnh"/>
+                <PrimaryButton type="submit" text="Register"/>
               </Col>
             </Row>
           </div>
