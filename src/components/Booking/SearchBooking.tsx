@@ -189,7 +189,7 @@ const SearchBooking: React.FC = () => {
       });
 
       ZoomMtg.init({
-        leaveUrl: "http://www.zoom.us",
+        leaveUrl: meetConfig.leaveUrl,
         isSupportAV: true,
         success: function () {
           ZoomMtg.join({
