@@ -128,7 +128,7 @@ const SearchBooking: React.FC = () => {
     setFirstTimeVisit(false);
     let res: any = await api.searchBooking(query);
     if (res.data) {
-        res.data.map((item: any, index: number) => {
+        res = res.data.map((item: any, index: number) => {
           const doctorName = item.doctor.fullName,
             startTime = new Date(
               item.bookingDateTimestamp + 15 * 60000 * item.startBlockTimeIndex
@@ -215,7 +215,6 @@ const SearchBooking: React.FC = () => {
 
   function _renderItemColumn(item: any, index: number, column: IColumn) {
     const fieldContent = item[column.fieldName] as string;
-    console.log(column.key);
     switch (column.key) {
       case "column6":
         return fieldContent === null ? (
