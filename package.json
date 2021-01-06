@@ -43,7 +43,7 @@
     "@types/react-redux": "^7.1.7",
     "@types/react-router": "^5.1.5",
     "@zoomus/websdk": "^1.7.6",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "bootstrap": "^4.4.1",
     "connected-react-router": "^6.8.0",
     "dotenv": "^8.2.0",
